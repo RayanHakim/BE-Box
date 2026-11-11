@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game - Mystery Box Challenge</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+    <main class="game-wrap">
+
+        <nav class="topbar">
+            <a href="index.html" class="brand">
+                <span class="brand-mark">?</span>
+                MYSTERY<span>BOX</span>
+            </a>
+
+            <div class="game-nav-actions">
+                <span class="game-status" id="gameStatus">
+                    Menunggu permainan
+                </span>
+
+                <a href="index.html" class="admin-link">
+                    Keluar
+                </a>
+            </div>
+        </nav>
+
+        <!-- SETUP PEMAIN -->
+        <section class="setup-section" id="setupSection">
+
+            <div class="section-heading">
+                <div class="eyebrow">GAME SETUP</div>
+                <h1>Siapkan <span>Permainan</span></h1>
+                <p>Masukkan nama seluruh pemain sebelum permainan dimulai.</p>
+            </div>
+
+            <div class="setup-card">
+
+                <div class="form-group">
+                    <label for="playerCount">Jumlah pemain</label>
+                    <input
+                        type="number"
+                        id="playerCount"
+                        min="2"
+                        max="20"
+                        value="5"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="boxCount">Jumlah Mystery Box</label>
+                    <input
+                        type="number"
+                        id="boxCount"
+                        min="2"
+                        max="100"
+                        value="30"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Nama pemain</label>
+
+                    <div id="playerInputs" class="player-inputs">
+                        <!-- Input nama dibuat melalui JavaScript -->
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-primary btn-block"
+                    id="startGameButton"
+                >
+                    Mulai Permainan →
+                </button>
+
+                <p class="form-note">
+                    Urutan pemain akan berjalan otomatis secara bergantian.
+                </p>
+
+            </div>
+
+        </section>
+
+        <!-- AREA PERMAINAN -->
+        <section class="game-section hidden" id="gameSection">
+
+            <div class="game-header">
+
+                <div>
+                    <div class="eyebrow">MYSTERY BOX CHALLENGE</div>
+                    <h1>Choose Your <span>Box</span></h1>
+                    <p id="roundInfo">Ronde 1</p>
+                </div>
+
+                <div class="game-progress">
+                    <span>Box tersisa</span>
+                    <strong id="remainingBoxes">30</strong>
+                </div>
+
+            </div>
+
+            <!-- GILIRAN PEMAIN -->
+            <div class="turn-card">
+
+                <div class="turn-player-info">
+                    <span class="turn-label">GILIRAN SEKARANG</span>
+                    <h2 id="currentPlayerName">Player 1</h2>
+                    <p id="currentTurnInfo">Giliran 1</p>
+                </div>
+
+                <div class="turn-indicator">
+                    <span class="turn-dot"></span>
+                    <span>YOUR TURN</span>
+                </div>
+
+            </div>
+
+            <!-- MYSTERY BOX -->
+            <div class="box-area">
+
+                <div class="box-area-heading">
+                    <h2>Pilih Mystery Box</h2>
+                    <p>Pilih salah satu kotak yang masih tersedia.</p>
+                </div>
+
+                <div class="box-grid" id="boxGrid">
+                    <!-- Mystery Box dibuat melalui JavaScript -->
+                </div>
+
+            </div>
+
+            <!-- LEADERBOARD -->
+            <section class="leaderboard-section">
+
+                <div class="leaderboard-heading">
+                    <div>
+                        <div class="eyebrow">LIVE SCORE</div>
+                        <h2>Leaderboard</h2>
+                    </div>
+
+                    <span class="live-label">● LIVE</span>
+                </div>
+
+                <div class="leaderboard-table-wrapper">
+
+                    <table class="leaderboard-table">
+
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Nama Pemain</th>
+                                <th>Benar</th>
+                                <th>Waktu</th>
+                                <th>Skor</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="leaderboardBody">
+                            <!-- Data leaderboard dibuat melalui JavaScript -->
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </section>
+
+        <!-- HASIL PERMAINAN -->
+        <section class="result-section hidden" id="resultSection">
+
+            <div class="result-card">
+
+                <div class="eyebrow">GAME COMPLETED</div>
+
+                <h1>Permainan <span>Selesai!</span></h1>
+
+                <p id="winnerMessage">
+                    Selamat kepada pemenang!
+                </p>
+
+                <div class="winner-display" id="winnerDisplay">
+                    <!-- Pemenang ditampilkan melalui JavaScript -->
+                </div>
+
+                <div class="result-leaderboard">
+                    <h2>Hasil Akhir</h2>
+
+                    <div class="leaderboard-table-wrapper">
+                        <table class="leaderboard-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Nama Pemain</th>
+                                    <th>Benar</th>
+                                    <th>Waktu</th>
+                                    <th>Skor</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="finalLeaderboardBody">
+                                <!-- Hasil akhir dibuat melalui JavaScript -->
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+
+                <div class="result-actions">
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="exportExcelButton"
+                    >
+                        Export Excel
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-ghost"
+                        id="restartGameButton"
+                    >
+                        Main Lagi
+                    </button>
+
+                    <a href="index.html" class="btn btn-ghost">
+                        Kembali ke Home
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- MODAL HASIL MYSTERY BOX -->
+    <div class="modal-overlay hidden" id="boxModal">
+
+        <div class="modal-card">
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeModalButton"
+                aria-label="Tutup"
+            >
+                ×
+            </button>
+
+            <div class="modal-content" id="modalContent">
+                <!-- Isi modal dibuat melalui JavaScript -->
+            </div>
+
+            <div class="modal-actions" id="modalActions">
+                <!-- Tombol modal dibuat melalui JavaScript -->
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script src="js/storage.js"></script>
+    <script src="js/excel.js"></script>
+    <script src="js/game.js"></script>
+
+</body>
+</html>

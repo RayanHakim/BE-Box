@@ -1,0 +1,604 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Mystery Box Challenge</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+    <main class="admin-wrap">
+
+        <nav class="topbar">
+            <a href="index.html" class="brand">
+                <span class="brand-mark">?</span>
+                MYSTERY<span>BOX</span>
+            </a>
+
+            <a href="index.html" class="admin-link">
+                Kembali ke Home
+            </a>
+        </nav>
+
+        <!-- LOGIN ADMIN -->
+        <section class="admin-login-section" id="adminLoginSection">
+
+            <div class="admin-login-card">
+
+                <div class="admin-icon">⚙</div>
+
+                <div class="eyebrow">ADMINISTRATION</div>
+
+                <h1>Admin <span>Panel</span></h1>
+
+                <p>
+                    Login untuk mengelola pertanyaan dan pengaturan permainan.
+                </p>
+
+                <form id="adminLoginForm">
+
+                    <div class="form-group">
+                        <label for="adminUsername">Username</label>
+                        <input
+                            type="text"
+                            id="adminUsername"
+                            placeholder="Masukkan username"
+                            autocomplete="username"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPassword">Password</label>
+                        <input
+                            type="password"
+                            id="adminPassword"
+                            placeholder="Masukkan password"
+                            autocomplete="current-password"
+                            required
+                        >
+                    </div>
+
+                    <p class="error-message hidden" id="loginError">
+                        Username atau password salah.
+                    </p>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                    >
+                        Login Admin →
+                    </button>
+
+                </form>
+
+                <p class="form-note">
+                    Default login: admin / 123
+                </p>
+
+            </div>
+
+        </section>
+
+        <!-- DASHBOARD ADMIN -->
+        <section class="admin-dashboard hidden" id="adminDashboard">
+
+            <div class="admin-header">
+
+                <div>
+                    <div class="eyebrow">CONTROL CENTER</div>
+                    <h1>Dashboard <span>Admin</span></h1>
+                    <p>Kelola seluruh kebutuhan Mystery Box Challenge.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-ghost"
+                    id="adminLogoutButton"
+                >
+                    Logout
+                </button>
+
+            </div>
+
+            <!-- STATISTIK -->
+            <div class="admin-stats">
+
+                <div class="admin-stat-card">
+                    <span>Total Pertanyaan</span>
+                    <strong id="totalQuestions">0</strong>
+                </div>
+
+                <div class="admin-stat-card">
+                    <span>Pertanyaan Aktif</span>
+                    <strong id="activeQuestions">0</strong>
+                </div>
+
+                <div class="admin-stat-card">
+                    <span>Kategori</span>
+                    <strong id="totalCategories">0</strong>
+                </div>
+
+            </div>
+
+            <!-- NAVIGASI ADMIN -->
+            <div class="admin-tabs">
+
+                <button
+                    type="button"
+                    class="admin-tab active"
+                    data-tab="questions"
+                >
+                    Kelola Pertanyaan
+                </button>
+
+                <button
+                    type="button"
+                    class="admin-tab"
+                    data-tab="settings"
+                >
+                    Pengaturan Game
+                </button>
+
+            </div>
+
+            <!-- TAB PERTANYAAN -->
+            <section class="admin-tab-content" id="questionsTab">
+
+                <div class="admin-section-heading">
+
+                    <div>
+                        <h2>Daftar Pertanyaan</h2>
+                        <p>Tambah, ubah, atau hapus pertanyaan kuis.</p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="addQuestionButton"
+                    >
+                        + Tambah Pertanyaan
+                    </button>
+
+                </div>
+
+                <div class="question-filter">
+
+                    <input
+                        type="search"
+                        id="questionSearch"
+                        placeholder="Cari pertanyaan..."
+                    >
+
+                    <select id="categoryFilter">
+                        <option value="">Semua Kategori</option>
+                    </select>
+
+                    <select id="difficultyFilter">
+                        <option value="">Semua Kesulitan</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+
+                    <select id="statusFilter">
+                        <option value="">Semua Status</option>
+                        <option value="active">Aktif</option>
+                        <option value="inactive">Nonaktif</option>
+                    </select>
+
+                </div>
+
+                <div class="question-list-wrapper">
+
+                    <table class="question-table">
+
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Pertanyaan</th>
+                                <th>Kategori</th>
+                                <th>Kesulitan</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="questionTableBody">
+                            <!-- Data pertanyaan dibuat melalui JavaScript -->
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="empty-state hidden" id="emptyQuestionState">
+                    Belum ada pertanyaan yang tersedia.
+                </div>
+
+            </section>
+
+            <!-- TAB PENGATURAN -->
+            <section
+                class="admin-tab-content hidden"
+                id="settingsTab"
+            >
+
+                <div class="admin-section-heading">
+                    <div>
+                        <h2>Pengaturan Permainan</h2>
+                        <p>Atur timer, skor, dan komposisi Mystery Box.</p>
+                    </div>
+                </div>
+
+                <!-- TIMER DAN POIN -->
+                <div class="settings-card">
+
+                    <h3>Pengaturan Kuis</h3>
+
+                    <div class="settings-grid">
+
+                        <div class="form-group">
+                            <label for="timerDuration">
+                                Durasi timer (detik)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="timerDuration"
+                                min="5"
+                                max="300"
+                                value="20"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="easyPoints">
+                                Poin Easy
+                            </label>
+
+                            <input
+                                type="number"
+                                id="easyPoints"
+                                min="0"
+                                value="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mediumPoints">
+                                Poin Medium
+                            </label>
+
+                            <input
+                                type="number"
+                                id="mediumPoints"
+                                min="0"
+                                value="150"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hardPoints">
+                                Poin Hard
+                            </label>
+
+                            <input
+                                type="number"
+                                id="hardPoints"
+                                min="0"
+                                value="200"
+                            >
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- POIN SPECIAL BOX -->
+                <div class="settings-card">
+
+                    <h3>Pengaturan Special Box</h3>
+
+                    <div class="settings-grid">
+
+                        <div class="form-group">
+                            <label for="bombPoints">
+                                Bomb (pengurangan poin)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="bombPoints"
+                                min="0"
+                                value="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="luckyPoints">
+                                Lucky Bonus
+                            </label>
+
+                            <input
+                                type="number"
+                                id="luckyPoints"
+                                min="0"
+                                value="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="doubleMultiplier">
+                                Double Points Multiplier
+                            </label>
+
+                            <input
+                                type="number"
+                                id="doubleMultiplier"
+                                min="2"
+                                max="10"
+                                value="2"
+                            >
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- JUMLAH BOX -->
+                <div class="settings-card">
+
+                    <h3>Komposisi Mystery Box</h3>
+
+                    <p class="settings-description">
+                        Tentukan jumlah box spesial. Sisa kotak akan berisi kuis.
+                    </p>
+
+                    <div class="settings-grid">
+
+                        <div class="form-group">
+                            <label for="bombCount">
+                                Bomb Box
+                            </label>
+
+                            <input
+                                type="number"
+                                id="bombCount"
+                                min="0"
+                                value="3"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="luckyCount">
+                                Lucky Box
+                            </label>
+
+                            <input
+                                type="number"
+                                id="luckyCount"
+                                min="0"
+                                value="3"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="doubleCount">
+                                Double Points Box
+                            </label>
+
+                            <input
+                                type="number"
+                                id="doubleCount"
+                                min="0"
+                                value="2"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emptyCount">
+                                Empty Box
+                            </label>
+
+                            <input
+                                type="number"
+                                id="emptyCount"
+                                min="0"
+                                value="2"
+                            >
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="saveSettingsButton"
+                >
+                    Simpan Pengaturan
+                </button>
+
+                <p class="settings-feedback" id="settingsFeedback"></p>
+
+            </section>
+
+        </section>
+
+    </main>
+
+    <!-- MODAL TAMBAH / EDIT PERTANYAAN -->
+    <div class="modal-overlay hidden" id="questionModal">
+
+        <div class="modal-card question-modal-card">
+
+            <div class="modal-heading">
+
+                <div>
+                    <div class="eyebrow">QUESTION MANAGEMENT</div>
+                    <h2 id="questionModalTitle">
+                        Tambah Pertanyaan
+                    </h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    id="closeQuestionModalButton"
+                    aria-label="Tutup"
+                >
+                    ×
+                </button>
+
+            </div>
+
+            <form id="questionForm">
+
+                <input type="hidden" id="questionId">
+
+                <div class="form-group">
+                    <label for="questionText">
+                        Teks Pertanyaan
+                    </label>
+
+                    <textarea
+                        id="questionText"
+                        rows="3"
+                        placeholder="Masukkan pertanyaan..."
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="questionCategory">
+                        Kategori
+                    </label>
+
+                    <input
+                        type="text"
+                        id="questionCategory"
+                        placeholder="Contoh: Pengetahuan Umum"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="questionDifficulty">
+                        Tingkat Kesulitan
+                    </label>
+
+                    <select id="questionDifficulty" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Pilihan Jawaban</label>
+
+                    <div class="option-input-group">
+                        <span>A</span>
+                        <input
+                            type="text"
+                            id="optionA"
+                            placeholder="Pilihan A"
+                            required
+                        >
+                    </div>
+
+                    <div class="option-input-group">
+                        <span>B</span>
+                        <input
+                            type="text"
+                            id="optionB"
+                            placeholder="Pilihan B"
+                            required
+                        >
+                    </div>
+
+                    <div class="option-input-group">
+                        <span>C</span>
+                        <input
+                            type="text"
+                            id="optionC"
+                            placeholder="Pilihan C"
+                            required
+                        >
+                    </div>
+
+                    <div class="option-input-group">
+                        <span>D</span>
+                        <input
+                            type="text"
+                            id="optionD"
+                            placeholder="Pilihan D"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label for="correctAnswer">
+                        Jawaban yang Benar
+                    </label>
+
+                    <select id="correctAnswer" required>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <input
+                        type="checkbox"
+                        id="questionActive"
+                        checked
+                    >
+
+                    <label for="questionActive">
+                        Aktifkan pertanyaan
+                    </label>
+                </div>
+
+                <div class="question-form-actions">
+
+                    <button
+                        type="button"
+                        class="btn btn-ghost"
+                        id="cancelQuestionButton"
+                    >
+                        Batal
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Simpan Pertanyaan
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script src="js/storage.js"></script>
+    <script src="js/excel.js"></script>
+    <script src="js/admin.js"></script>
+
+</body>
+</html>

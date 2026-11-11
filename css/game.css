@@ -1,0 +1,905 @@
+
+/* =========================================================
+   MYSTERY BOX - GAME PAGE
+   Theme: Outdoor Treasure Hunt
+   ========================================================= */
+
+
+/* =========================================================
+   1. GAME NAVIGATION
+   ========================================================= */
+
+.game-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.game-status {
+    padding: 8px 13px;
+
+    color: var(--success);
+    background: rgba(54, 134, 107, 0.10);
+
+    border-radius: 50px;
+
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   2. SETUP SECTION
+   ========================================================= */
+
+.setup-section {
+    max-width: 650px;
+    margin: 75px auto 100px;
+    animation: fadeIn 0.6s ease;
+}
+
+.section-heading {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.section-heading h1 {
+    margin-bottom: 15px;
+}
+
+.section-heading p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.setup-card {
+    padding: 35px;
+}
+
+.player-inputs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.player-inputs input {
+    background: #FAFBF8;
+}
+
+.setup-card .btn {
+    margin-top: 10px;
+}
+
+
+/* =========================================================
+   3. GAME HEADER
+   ========================================================= */
+
+.game-section {
+    padding: 45px 0 90px;
+    animation: fadeIn 0.6s ease;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+
+    margin-bottom: 35px;
+}
+
+.game-header h1 {
+    margin-bottom: 10px;
+}
+
+.game-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.game-progress {
+    min-width: 120px;
+    padding: 18px 24px;
+
+    color: var(--white);
+    background: var(--forest);
+
+    border-radius: 18px;
+    text-align: center;
+
+    box-shadow: var(--shadow-md);
+}
+
+.game-progress span {
+    display: block;
+    margin-bottom: 5px;
+
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.game-progress strong {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+}
+
+
+/* =========================================================
+   4. CURRENT PLAYER / TURN CARD
+   ========================================================= */
+
+.turn-card {
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+
+    padding: 27px 32px;
+    margin-bottom: 45px;
+
+    color: var(--white);
+    background: var(--forest);
+
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-md);
+}
+
+.turn-card::before {
+    content: "✦";
+    position: absolute;
+
+    right: 145px;
+    top: -38px;
+
+    color: rgba(255, 255, 255, 0.06);
+    font-size: 150px;
+
+    pointer-events: none;
+}
+
+.turn-card::after {
+    content: "";
+    position: absolute;
+
+    width: 170px;
+    height: 170px;
+
+    right: -65px;
+    bottom: -100px;
+
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 0 20px rgba(255, 255, 255, 0.025),
+        0 0 0 40px rgba(255, 255, 255, 0.025);
+}
+
+.turn-player-info {
+    position: relative;
+    z-index: 1;
+}
+
+.turn-label {
+    display: block;
+    margin-bottom: 8px;
+
+    color: #B8D1C5;
+
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.turn-player-info h2 {
+    color: var(--white);
+    font-size: 1.9rem;
+}
+
+.turn-player-info p {
+    margin-top: 5px;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.82rem;
+}
+
+.turn-indicator {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 10px 15px;
+
+    color: #D7F4DF;
+    background: rgba(255, 255, 255, 0.11);
+
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 50px;
+
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.turn-dot {
+    width: 8px;
+    height: 8px;
+
+    background: #8EE0A7;
+    border-radius: 50%;
+
+    box-shadow: 0 0 10px #8EE0A7;
+
+    animation: pulse 1.5s infinite;
+}
+
+
+/* =========================================================
+   5. MYSTERY BOX AREA
+   ========================================================= */
+
+.box-area {
+    margin-bottom: 55px;
+}
+
+.box-area-heading {
+    margin-bottom: 24px;
+}
+
+.box-area-heading h2 {
+    color: var(--forest-dark);
+    margin-bottom: 7px;
+}
+
+.box-area-heading p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+
+/* =========================================================
+   6. BOX GRID
+   ========================================================= */
+
+.box-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 17px;
+}
+
+
+/* =========================================================
+   7. INDIVIDUAL MYSTERY BOX
+   ========================================================= */
+
+.mystery-box {
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    min-height: 145px;
+    padding: 16px 10px;
+
+    color: var(--white);
+    background:
+        linear-gradient(
+            145deg,
+            #285B4D,
+            #183F35 65%,
+            #102D26
+        );
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 21px;
+
+    box-shadow: 0 8px 18px rgba(16, 45, 38, 0.17);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease,
+        opacity 0.3s ease;
+
+    cursor: pointer;
+}
+
+
+/* Decorative shine */
+.mystery-box::before {
+    content: "";
+    position: absolute;
+
+    width: 130px;
+    height: 130px;
+
+    top: -85px;
+    left: -60px;
+
+    background: rgba(255, 255, 255, 0.11);
+    border-radius: 50%;
+
+    transition: 0.4s ease;
+}
+
+.mystery-box::after {
+    content: "";
+    position: absolute;
+
+    inset: 5px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+
+    pointer-events: none;
+}
+
+
+/* Hover */
+.mystery-box:not(.used):hover {
+    transform: translateY(-9px) rotate(-1deg);
+
+    background:
+        linear-gradient(
+            145deg,
+            #36715F,
+            #204C40
+        );
+
+    box-shadow: 0 17px 30px rgba(16, 45, 38, 0.25);
+}
+
+.mystery-box:not(.used):hover::before {
+    transform: scale(1.6);
+}
+
+.mystery-box:not(.used):active {
+    transform: scale(0.94);
+}
+
+
+/* Box number */
+.box-number {
+    position: relative;
+    z-index: 1;
+
+    color: rgba(255, 255, 255, 0.95);
+
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+
+/* Box symbol */
+.box-icon {
+    position: relative;
+    z-index: 1;
+
+    display: grid;
+    place-items: center;
+
+    width: 40px;
+    height: 40px;
+
+    color: #FFD09C;
+    background: rgba(255, 255, 255, 0.12);
+
+    border-radius: 13px;
+
+    font-size: 1.3rem;
+}
+
+
+/* Box label */
+.box-label {
+    position: relative;
+    z-index: 1;
+
+    color: rgba(255, 255, 255, 0.75);
+
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+
+/* Used box */
+.mystery-box.used {
+    color: #89958D;
+    background: #E2E5DE;
+
+    border: 1px solid #D7DDD5;
+    box-shadow: none;
+
+    cursor: not-allowed;
+    opacity: 0.65;
+    transform: none;
+}
+
+.mystery-box.used .box-number {
+    color: #A2ACA3;
+}
+
+.mystery-box.used .box-icon {
+    color: #8B988D;
+    background: rgba(24, 63, 53, 0.08);
+}
+
+.mystery-box.used .box-label {
+    color: #8B988D;
+}
+
+.mystery-box.used::before,
+.mystery-box.used::after {
+    display: none;
+}
+
+
+/* =========================================================
+   8. LEADERBOARD
+   ========================================================= */
+
+.leaderboard-section {
+    padding: 30px;
+
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-sm);
+}
+
+.leaderboard-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 24px;
+}
+
+.leaderboard-heading h2 {
+    color: var(--forest-dark);
+}
+
+.live-label {
+    padding: 8px 12px;
+
+    color: var(--success);
+    background: rgba(54, 134, 107, 0.1);
+
+    border-radius: 50px;
+
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.leaderboard-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+
+    border-radius: 13px;
+}
+
+.leaderboard-table {
+    min-width: 570px;
+}
+
+.leaderboard-table td:last-child {
+    color: var(--forest);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   9. QUESTION MODAL
+   ========================================================= */
+
+#boxModal .modal-card {
+    width: min(590px, 100%);
+    text-align: center;
+}
+
+.modal-content {
+    padding-top: 12px;
+}
+
+.modal-content h2 {
+    margin-bottom: 12px;
+    color: var(--forest-dark);
+}
+
+.modal-content p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+
+    margin-top: 25px;
+}
+
+
+/* =========================================================
+   10. QUIZ QUESTION
+   ========================================================= */
+
+.quiz-question {
+    margin: 20px 0;
+
+    color: var(--forest-dark);
+
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.quiz-meta {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    margin-bottom: 15px;
+}
+
+.quiz-meta span {
+    padding: 7px 12px;
+
+    color: var(--forest);
+    background: rgba(24, 63, 53, 0.08);
+
+    border-radius: 50px;
+
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   11. TIMER
+   ========================================================= */
+
+.quiz-timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    width: fit-content;
+    min-width: 100px;
+
+    margin: 20px auto;
+    padding: 12px 22px;
+
+    color: var(--forest);
+    background: #E6EDE5;
+
+    border-radius: 15px;
+
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+}
+
+.quiz-timer.warning {
+    color: var(--danger);
+    background: #FCE8E5;
+
+    animation: pulse 0.7s infinite;
+}
+
+
+/* =========================================================
+   12. QUIZ OPTIONS
+   ========================================================= */
+
+.quiz-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+
+    margin-top: 25px;
+}
+
+.quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    min-height: 58px;
+    padding: 13px;
+
+    color: var(--text-main);
+    background: #FFFFFF;
+
+    border: 1px solid rgba(24, 63, 53, 0.13);
+    border-radius: 14px;
+
+    text-align: left;
+
+    font-size: 0.85rem;
+    font-weight: 700;
+
+    transition: var(--transition);
+}
+
+.quiz-option:hover {
+    border-color: var(--forest);
+    background: #F0F5EF;
+    transform: translateY(-2px);
+}
+
+.quiz-option.selected {
+    color: var(--white);
+    background: var(--forest);
+    border-color: var(--forest);
+}
+
+.quiz-option.correct {
+    color: var(--white);
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.quiz-option.wrong {
+    color: var(--white);
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.option-letter {
+    display: grid;
+    place-items: center;
+
+    flex-shrink: 0;
+
+    width: 30px;
+    height: 30px;
+
+    color: var(--forest);
+    background: var(--cream);
+
+    border-radius: 9px;
+
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 900;
+}
+
+
+/* =========================================================
+   13. SPECIAL BOX RESULT
+   ========================================================= */
+
+.special-result-icon {
+    display: grid;
+    place-items: center;
+
+    width: 95px;
+    height: 95px;
+
+    margin: 0 auto 22px;
+
+    color: var(--orange);
+    background: rgba(231, 111, 53, 0.12);
+
+    border: 1px solid rgba(231, 111, 53, 0.15);
+    border-radius: 30px;
+
+    font-size: 2.7rem;
+
+    animation: float 2.5s ease-in-out infinite;
+}
+
+.special-result-points {
+    display: block;
+    margin: 15px 0;
+
+    color: var(--forest);
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.7rem;
+    font-weight: 900;
+}
+
+.special-result-description {
+    max-width: 350px;
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   14. RESULT SECTION
+   ========================================================= */
+
+.result-section {
+    padding: 55px 0 90px;
+    animation: fadeIn 0.6s ease;
+}
+
+.result-card {
+    padding: 40px;
+
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+
+    box-shadow: var(--shadow-md);
+
+    text-align: center;
+}
+
+.result-card h1 {
+    margin-bottom: 12px;
+}
+
+.result-card > p {
+    color: var(--text-muted);
+}
+
+.winner-display {
+    position: relative;
+    overflow: hidden;
+
+    margin: 30px 0;
+    padding: 35px 20px;
+
+    color: var(--white);
+    background: var(--forest);
+
+    border-radius: 24px;
+}
+
+.winner-display h2 {
+    color: var(--white);
+    font-size: 2rem;
+}
+
+.winner-display p {
+    margin-top: 8px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.result-leaderboard {
+    margin-top: 35px;
+    text-align: left;
+}
+
+.result-leaderboard h2 {
+    margin-bottom: 20px;
+    color: var(--forest);
+}
+
+.result-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+
+    margin-top: 30px;
+}
+
+
+/* =========================================================
+   15. RESPONSIVE GAME
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .box-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 13px;
+    }
+
+    .mystery-box {
+        min-height: 130px;
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .game-section {
+        padding-top: 30px;
+    }
+
+    .game-header {
+        align-items: flex-start;
+    }
+
+    .game-progress {
+        min-width: 90px;
+        padding: 13px;
+    }
+
+    .game-progress strong {
+        font-size: 1.5rem;
+    }
+
+    .box-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .mystery-box {
+        min-height: 120px;
+        border-radius: 16px;
+    }
+
+    .box-number {
+        font-size: 1.7rem;
+    }
+
+    .box-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 1.1rem;
+    }
+
+    .turn-card {
+        padding: 22px;
+    }
+
+    .turn-player-info h2 {
+        font-size: 1.45rem;
+    }
+
+    .turn-indicator {
+        padding: 8px 10px;
+        font-size: 0.6rem;
+    }
+
+    .leaderboard-section {
+        padding: 20px 14px;
+    }
+
+    .quiz-options {
+        grid-template-columns: 1fr;
+    }
+
+    .result-card {
+        padding: 25px 17px;
+    }
+
+    .winner-display h2 {
+        font-size: 1.6rem;
+    }
+
+}
+
+@media (max-width: 380px) {
+
+    .box-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .game-header {
+        flex-direction: column;
+    }
+
+    .turn-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+}

@@ -1,0 +1,695 @@
+
+/* =========================================================
+   MYSTERY BOX - GLOBAL DESIGN SYSTEM
+   Theme: Adventure Mystery / Outdoor Edition
+   ========================================================= */
+
+/* GOOGLE FONT */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+
+/* =========================================================
+   1. COLOR VARIABLES
+   ========================================================= */
+
+:root {
+    --forest: #183F35;
+    --forest-dark: #102D26;
+    --forest-light: #285B4D;
+
+    --cream: #F5F1E7;
+    --cream-dark: #EAE3D4;
+
+    --orange: #E76F35;
+    --orange-light: #F28A52;
+
+    --red: #D92F36;
+
+    --white: #FFFFFF;
+    --black: #18211E;
+
+    --text-main: #23342D;
+    --text-muted: #7C8981;
+    --text-light: #AAB5AD;
+
+    --border: rgba(24, 63, 53, 0.12);
+
+    --success: #36866B;
+    --warning: #E6A33C;
+    --danger: #D94B4B;
+
+    --shadow-sm: 0 4px 15px rgba(19, 45, 36, 0.06);
+    --shadow-md: 0 12px 35px rgba(19, 45, 36, 0.10);
+    --shadow-lg: 0 25px 70px rgba(19, 45, 36, 0.16);
+
+    --radius-sm: 10px;
+    --radius-md: 18px;
+    --radius-lg: 26px;
+    --radius-xl: 34px;
+
+    --transition: 0.25s ease;
+}
+
+
+/* =========================================================
+   2. RESET
+   ========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-main);
+    background-color: var(--cream);
+    overflow-x: hidden;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    background-image:
+        radial-gradient(
+            circle at 10% 10%,
+            rgba(231, 111, 53, 0.07),
+            transparent 25%
+        ),
+        radial-gradient(
+            circle at 90% 80%,
+            rgba(24, 63, 53, 0.08),
+            transparent 30%
+        );
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button {
+    cursor: pointer;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+::selection {
+    color: var(--white);
+    background: var(--forest-light);
+}
+
+
+/* =========================================================
+   3. TYPOGRAPHY
+   ========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+.brand {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.7px;
+}
+
+h1 {
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    line-height: 1.08;
+    font-weight: 800;
+    color: var(--forest-dark);
+}
+
+h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700;
+}
+
+h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+p {
+    line-height: 1.7;
+}
+
+h1 span,
+h2 span {
+    color: var(--orange);
+}
+
+
+/* =========================================================
+   4. COMMON LAYOUT
+   ========================================================= */
+
+.home-wrap,
+.game-wrap,
+.admin-wrap {
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 2.2px;
+    color: var(--orange);
+
+    margin-bottom: 16px;
+}
+
+.eyebrow::before {
+    content: "";
+    width: 22px;
+    height: 2px;
+    background: var(--orange);
+    border-radius: 5px;
+}
+
+
+/* =========================================================
+   5. NAVIGATION BAR
+   ========================================================= */
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 27px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    color: var(--forest);
+    font-size: 1.2rem;
+    font-weight: 900;
+    letter-spacing: -0.8px;
+}
+
+.brand span:last-child {
+    color: var(--orange);
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+
+    width: 37px;
+    height: 37px;
+
+    color: var(--white);
+    background: var(--forest);
+    border-radius: 12px;
+
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+
+    box-shadow: 0 5px 12px rgba(24, 63, 53, 0.18);
+}
+
+.admin-link {
+    color: var(--forest);
+    font-size: 0.88rem;
+    font-weight: 700;
+
+    padding: 10px 17px;
+    border: 1px solid var(--border);
+    border-radius: 50px;
+
+    transition: var(--transition);
+}
+
+.admin-link:hover {
+    color: var(--white);
+    background: var(--forest);
+    border-color: var(--forest);
+    transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   6. BUTTONS
+   ========================================================= */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    min-height: 48px;
+    padding: 13px 23px;
+
+    border: 1px solid transparent;
+    border-radius: 14px;
+
+    font-size: 0.9rem;
+    font-weight: 800;
+
+    transition:
+        transform var(--transition),
+        background var(--transition),
+        box-shadow var(--transition),
+        border-color var(--transition);
+
+    cursor: pointer;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+}
+
+.btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-primary {
+    color: var(--white);
+    background: var(--forest);
+
+    box-shadow: 0 8px 18px rgba(24, 63, 53, 0.17);
+}
+
+.btn-primary:hover {
+    background: var(--forest-light);
+    box-shadow: 0 12px 25px rgba(24, 63, 53, 0.22);
+}
+
+.btn-primary span {
+    font-size: 1.15rem;
+}
+
+.btn-ghost {
+    color: var(--forest);
+    background: rgba(255, 255, 255, 0.5);
+    border-color: var(--border);
+}
+
+.btn-ghost:hover {
+    background: var(--white);
+    border-color: rgba(24, 63, 53, 0.25);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+
+/* =========================================================
+   7. FORM ELEMENTS
+   ========================================================= */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    color: var(--forest-dark);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+input,
+textarea,
+select {
+    width: 100%;
+    min-height: 47px;
+
+    padding: 12px 15px;
+
+    color: var(--text-main);
+    background: #FFFFFF;
+
+    border: 1px solid rgba(24, 63, 53, 0.16);
+    border-radius: 12px;
+
+    outline: none;
+
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #A6B0A9;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--forest-light);
+    box-shadow: 0 0 0 4px rgba(40, 91, 77, 0.09);
+}
+
+input[type="checkbox"] {
+    width: 17px;
+    min-height: 17px;
+    accent-color: var(--forest);
+}
+
+input[type="number"] {
+    appearance: textfield;
+}
+
+
+/* =========================================================
+   8. CARDS
+   ========================================================= */
+
+.setup-card,
+.admin-login-card,
+.settings-card,
+.admin-stat-card {
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(24, 63, 53, 0.08);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.setup-card,
+.admin-login-card {
+    padding: 32px;
+}
+
+.settings-card {
+    padding: 26px;
+    margin-bottom: 22px;
+}
+
+.admin-stat-card {
+    padding: 22px;
+    transition: var(--transition);
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+
+/* =========================================================
+   9. TABLES
+   ========================================================= */
+
+.leaderboard-table,
+.question-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.leaderboard-table th,
+.question-table th {
+    padding: 15px 17px;
+
+    color: var(--text-muted);
+    background: #F5F7F3;
+
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+
+    white-space: nowrap;
+}
+
+.leaderboard-table td,
+.question-table td {
+    padding: 16px 17px;
+    border-bottom: 1px solid rgba(24, 63, 53, 0.08);
+
+    font-size: 0.88rem;
+}
+
+.leaderboard-table tbody tr,
+.question-table tbody tr {
+    transition: background var(--transition);
+}
+
+.leaderboard-table tbody tr:hover,
+.question-table tbody tr:hover {
+    background: rgba(40, 91, 77, 0.045);
+}
+
+.leaderboard-table tbody tr:last-child td,
+.question-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   10. MODAL
+   ========================================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+
+    background: rgba(12, 29, 24, 0.72);
+    backdrop-filter: blur(8px);
+
+    animation: fadeIn 0.25s ease;
+}
+
+.modal-card {
+    position: relative;
+
+    width: min(540px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+
+    padding: 35px;
+
+    background: var(--cream);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-xl);
+
+    box-shadow: var(--shadow-lg);
+
+    animation: modalEnter 0.35s ease;
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+
+    width: 35px;
+    height: 35px;
+
+    color: var(--text-muted);
+    background: rgba(24, 63, 53, 0.07);
+
+    border: none;
+    border-radius: 50%;
+
+    font-size: 1.5rem;
+    line-height: 1;
+
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    color: var(--white);
+    background: var(--red);
+    transform: rotate(90deg);
+}
+
+
+/* =========================================================
+   11. FEEDBACK / STATUS
+   ========================================================= */
+
+.error-message {
+    color: var(--danger);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.form-note {
+    margin-top: 15px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+.settings-feedback {
+    margin-top: 15px;
+    color: var(--success);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   12. ANIMATIONS
+   ========================================================= */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.55;
+    }
+}
+
+
+/* =========================================================
+   13. RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .home-wrap,
+    .game-wrap,
+    .admin-wrap {
+        width: min(100% - 30px, 600px);
+    }
+
+    .topbar {
+        padding: 19px 0;
+    }
+
+    .brand {
+        font-size: 1rem;
+    }
+
+    .brand-mark {
+        width: 33px;
+        height: 33px;
+    }
+
+    .admin-link {
+        padding: 9px 12px;
+        font-size: 0.78rem;
+    }
+
+    .setup-card,
+    .admin-login-card {
+        padding: 24px 19px;
+    }
+
+    .modal-card {
+        padding: 28px 20px;
+        border-radius: 22px;
+    }
+
+    .leaderboard-table th,
+    .question-table th,
+    .leaderboard-table td,
+    .question-table td {
+        padding: 12px;
+        font-size: 0.78rem;
+    }
+
+}
+
+@media (max-width: 480px) {
+
+    h1 {
+        font-size: 2.15rem;
+    }
+
+    .eyebrow {
+        font-size: 0.65rem;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+}
