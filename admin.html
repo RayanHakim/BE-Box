@@ -19,9 +19,18 @@
                 MYSTERY<span>BOX</span>
             </a>
 
-            <a href="index.html" class="admin-link">
-                Kembali ke Home
-            </a>
+            <div class="site-nav-actions">
+                <button type="button" class="site-icon-control site-sound-toggle" id="gameMusicToggle"
+                    aria-label="Suara situs" aria-pressed="true" title="Matikan suara">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 17V6l11-2v11M9 9l11-2"/>
+                        <ellipse cx="6.5" cy="17" rx="2.5" ry="2" fill="currentColor" stroke="none"/>
+                        <ellipse cx="17.5" cy="15" rx="2.5" ry="2" fill="currentColor" stroke="none"/>
+                        <path class="sound-off-slash" d="m3 3 18 18"/>
+                    </svg>
+                </button>
+                <a href="index.html" class="admin-link">Beranda</a>
+            </div>
         </nav>
 
         <!-- LOGIN ADMIN -->
@@ -366,14 +375,14 @@
                     <h3>Komposisi Mystery Box</h3>
 
                     <p class="settings-description">
-                        Tentukan jumlah box spesial. Sisa kotak akan berisi kuis.
+                        Total kotak spesial selalu dua kali jumlah pemain. Atur bobot tiap jenis untuk menentukan komposisinya. Unlucky mengurangi setengah penalti Bomb, dibulatkan ke atas.
                     </p>
 
                     <div class="settings-grid">
 
                         <div class="form-group">
                             <label for="bombCount">
-                                Bomb Box
+                                Bobot Bomb Box
                             </label>
 
                             <input
@@ -386,7 +395,7 @@
 
                         <div class="form-group">
                             <label for="luckyCount">
-                                Lucky Box
+                                Bobot Lucky Box
                             </label>
 
                             <input
@@ -399,7 +408,7 @@
 
                         <div class="form-group">
                             <label for="doubleCount">
-                                Double Points Box
+                                Bobot Power Up (Double Points)
                             </label>
 
                             <input
@@ -411,13 +420,13 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="emptyCount">
-                                Empty Box
+                            <label for="unluckyCount">
+                                Bobot Unlucky Box
                             </label>
 
                             <input
                                 type="number"
-                                id="emptyCount"
+                                id="unluckyCount"
                                 min="0"
                                 value="2"
                             >
@@ -606,7 +615,9 @@
     </div>
 
     <!-- JAVASCRIPT -->
+    <audio id="gameMusic" src="assets/menu-background.wav" preload="none" loop></audio>
     <script src="js/storage.js"></script>
+    <script src="js/game-effects.js"></script>
     <script src="js/excel.js"></script>
     <script src="js/admin.js"></script>
 

@@ -25,7 +25,9 @@ Tidak membutuhkan database atau backend.
     const STORAGE_KEYS = {
         QUESTIONS: "mb_questions",
         SETTINGS: "mb_settings",
-        SESSION: "mb_session"
+        SESSION: "mb_session",
+        GAME_HISTORY: "mb_game_history",
+        MUSIC_ENABLED: "mb_music_enabled"
     };
 
 
@@ -47,7 +49,7 @@ Tidak membutuhkan database atau backend.
         bombCount: 3,
         luckyCount: 3,
         doubleCount: 2,
-        emptyCount: 2
+        unluckyCount: 2
     };
 
 
@@ -571,7 +573,8 @@ Tidak membutuhkan database atau backend.
 
         return {
             ...cloneData(DEFAULT_SETTINGS),
-            ...(savedSettings || {})
+            ...(savedSettings || {}),
+            unluckyCount: savedSettings?.unluckyCount ?? savedSettings?.emptyCount ?? DEFAULT_SETTINGS.unluckyCount
         };
     }
 
@@ -608,6 +611,14 @@ Tidak membutuhkan database atau backend.
         );
     }
 
+    function getMusicEnabled() {
+        return readStorage(STORAGE_KEYS.MUSIC_ENABLED, true);
+    }
+
+    function saveMusicEnabled(enabled) {
+        return writeStorage(STORAGE_KEYS.MUSIC_ENABLED, enabled);
+    }
+
 
     // =====================================================
     // GAME SESSION STORAGE
@@ -636,6 +647,35 @@ Tidak membutuhkan database atau backend.
         return null;
     }
 
+    function archiveFinishedSession(session, history) {
+        if (!session?.gameFinished || !session.savedAt || !Array.isArray(session.players) || session.players.length === 0) {
+            return history;
+        }
+
+        const id = session.id ?? `legacy:${session.savedAt}`;
+        if (history.some(game => game.id === id)) {
+            return history;
+        }
+
+        const players = session.players.map(({ name, score, correctAnswers, turns, timeSpent }) => ({
+            name, score, correctAnswers, turns, timeSpent
+        }));
+        const updated = [{ id, finishedAt: session.savedAt, players }, ...history]
+            .sort((a, b) => b.finishedAt.localeCompare(a.finishedAt))
+            .slice(0, 3);
+        writeStorage(STORAGE_KEYS.GAME_HISTORY, updated);
+        return updated;
+    }
+
+    function readGameHistory() {
+        const history = readStorage(STORAGE_KEYS.GAME_HISTORY, []);
+        return Array.isArray(history) ? history : [];
+    }
+
+    function getGameHistory() {
+        return archiveFinishedSession(getSession(), readGameHistory());
+    }
+
 
     function saveSession(sessionData) {
         if (
@@ -649,6 +689,10 @@ Tidak membutuhkan database atau backend.
             return false;
         }
 
+        if (sessionData.gameFinished) {
+            archiveFinishedSession(sessionData, readGameHistory());
+        }
+
         return writeStorage(
             STORAGE_KEYS.SESSION,
             sessionData
@@ -658,6 +702,7 @@ Tidak membutuhkan database atau backend.
 
     function clearSession() {
         try {
+            getGameHistory();
             localStorage.removeItem(
                 STORAGE_KEYS.SESSION
             );
@@ -693,6 +738,14 @@ Tidak membutuhkan database atau backend.
                 STORAGE_KEYS.SESSION
             );
 
+            localStorage.removeItem(
+                STORAGE_KEYS.GAME_HISTORY
+            );
+
+            localStorage.removeItem(
+                STORAGE_KEYS.MUSIC_ENABLED
+            );
+
             return true;
 
         } catch (error) {
@@ -715,6 +768,8 @@ Tidak membutuhkan database atau backend.
         // Constants
         STORAGE_KEYS,
         DEFAULT_SETTINGS,
+        QUESTIONS_PER_PLAYER: 5,
+        SPECIAL_BOXES_PER_PLAYER: 2,
 
         // Helper
         createId,
@@ -732,10 +787,13 @@ Tidak membutuhkan database atau backend.
         getSettings,
         saveSettings,
         resetSettings,
+        getMusicEnabled,
+        saveMusicEnabled,
 
         // Session
         getSession,
         getUnfinishedSession,
+        getGameHistory,
         saveSession,
         clearSession,
 

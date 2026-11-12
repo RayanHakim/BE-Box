@@ -3,7 +3,7 @@
 
     const startButton = document.querySelector('a[href="game.html"]');
     const activeQuestionCount = document.getElementById("activeQuestionCount");
-    const specialBoxCount = document.getElementById("specialBoxCount");
+    const minimumTurns = document.getElementById("minimumTurns");
     const secondsPerQuestion = document.getElementById("secondsPerQuestion");
 
     function updateHome() {
@@ -13,10 +13,9 @@
         }
 
         const settings = storage.getSettings();
-        const specialBoxes = [settings.bombCount, settings.luckyCount, settings.doubleCount, settings.emptyCount];
 
         activeQuestionCount.textContent = storage.getActiveQuestions().length;
-        specialBoxCount.textContent = specialBoxes.reduce((total, count) => total + (Number(count) || 0), 0);
+        minimumTurns.textContent = storage.QUESTIONS_PER_PLAYER + storage.SPECIAL_BOXES_PER_PLAYER;
         secondsPerQuestion.textContent = settings.timerDuration;
     }
 

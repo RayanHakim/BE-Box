@@ -39,6 +39,7 @@ Dependencies:
 
     const playerCountInput = document.getElementById("playerCount");
     const boxCountInput = document.getElementById("boxCount");
+    const boxPlan = document.getElementById("boxPlan");
     const playerInputs = document.getElementById("playerInputs");
     const startGameButton = document.getElementById("startGameButton");
 
@@ -52,6 +53,14 @@ Dependencies:
     const boxGrid = document.getElementById("boxGrid");
 
     const leaderboardBody = document.getElementById("leaderboardBody");
+    const turnLeaderboardDialog = document.getElementById("turnLeaderboardDialog");
+    const turnLeaderboardList = document.getElementById("turnLeaderboardList");
+    const turnLeaderboardRound = document.getElementById("turnLeaderboardRound");
+    const turnLeaderboardStatus = document.getElementById("turnLeaderboardStatus");
+    const turnLeaderboardConfetti = document.getElementById("turnLeaderboardConfetti");
+    const nextTurnDialog = document.getElementById("nextTurnDialog");
+    const nextTurnPlayer = document.getElementById("nextTurnPlayer");
+    const nextTurnProgress = document.getElementById("nextTurnProgress");
 
     const boxModal = document.getElementById("boxModal");
     const closeModalButton = document.getElementById("closeModalButton");
@@ -65,6 +74,7 @@ Dependencies:
     const exportExcelButton = document.getElementById("exportExcelButton");
     const restartGameButton = document.getElementById("restartGameButton");
     const restartDialog = document.getElementById("restartDialog");
+    const restartDialogDescription = document.getElementById("restartDialogDescription");
 
 
     // =====================================================
@@ -86,8 +96,11 @@ Dependencies:
     let timerInterval = null;
 
     let quizDeadline = null;
+    let turnLeaderboardTimer = null;
+    let nextTurnTimer = null;
 
     let gameFinished = false;
+    let sessionId = null;
 
     let currentSettings = null;
 
@@ -235,12 +248,16 @@ Dependencies:
         let count = Number(playerCountInput.value);
 
         if (!Number.isInteger(count)) {
-            count = 5;
+            count = 4;
         }
 
         count = Math.min(20, Math.max(2, count));
 
         playerCountInput.value = count;
+        boxCountInput.min = count * MBStorage.QUESTIONS_PER_PLAYER;
+        boxCountInput.step = count;
+        boxCountInput.value = boxCountInput.min;
+        updateBoxPlan();
 
         const previousNames = [];
 
@@ -322,75 +339,45 @@ Dependencies:
     // BOX GENERATION
     // =====================================================
 
-    function generateBoxes(totalBoxes, settings) {
-        const specialBoxes = [];
+    function updateBoxPlan() {
+        const playerCount = Number(playerCountInput.value);
+        const questionCount = Number(boxCountInput.value);
+        const minimum = playerCount * MBStorage.QUESTIONS_PER_PLAYER;
+        const specialCount = playerCount * MBStorage.SPECIAL_BOXES_PER_PLAYER;
 
-        const specialConfigurations = [
-            {
-                type: "bomb",
-                count: settings.bombCount
-            },
-            {
-                type: "lucky",
-                count: settings.luckyCount
-            },
-            {
-                type: "double",
-                count: settings.doubleCount
-            },
-            {
-                type: "empty",
-                count: settings.emptyCount
-            }
-        ];
-
-        specialConfigurations.forEach(
-            function (configuration) {
-                const count = Math.max(
-                    0,
-                    Math.floor(Number(configuration.count) || 0)
-                );
-
-                for (let i = 0; i < count; i++) {
-                    specialBoxes.push(configuration.type);
-                }
-            }
-        );
-
-        // Jika jumlah special box melebihi total box,
-        // pilih secara acak agar komposisinya tidak selalu sama.
-        const selectedSpecialBoxes = shuffleArray(
-            specialBoxes
-        ).slice(0, totalBoxes);
-
-        const generatedBoxes = selectedSpecialBoxes.map(
-            function (type, index) {
-                return {
-                    id: `box-${index + 1}`,
-                    type: type,
-                    used: false
-                };
-            }
-        );
-
-        // Isi sisa box dengan kuis.
-        while (generatedBoxes.length < totalBoxes) {
-            generatedBoxes.push({
-                id: `box-${generatedBoxes.length + 1}`,
-                type: "quiz",
-                used: false
-            });
+        if (!Number.isInteger(questionCount) || questionCount < minimum || questionCount % playerCount !== 0) {
+            boxPlan.textContent = `Masukkan minimal ${minimum} kotak soal, dalam kelipatan ${playerCount} agar giliran sama rata.`;
+            return;
         }
 
-        return shuffleArray(generatedBoxes).map(
-            function (box, index) {
-                return {
-                    ...box,
-                    id: `box-${index + 1}`,
-                    number: index + 1
-                };
-            }
-        );
+        const total = questionCount + specialCount;
+        boxPlan.textContent = `${questionCount} soal + ${specialCount} spesial = ${total} kotak. Setiap pemain mendapat ${total / playerCount} giliran.`;
+    }
+
+    function generateBoxes(questionCount, specialCount, settings) {
+        const types = ["bomb", "lucky", "double", "unlucky"];
+        const readWeights = source => types.map(type => Math.max(0, Number(source[`${type}Count`]) || 0));
+        let weights = readWeights(settings);
+        if (weights.every(weight => weight === 0)) weights = readWeights(MBStorage.DEFAULT_SETTINGS);
+        const totalWeight = weights.reduce((total, weight) => total + weight, 0);
+        const allocation = types.map((type, index) => {
+            const share = specialCount * weights[index] / totalWeight;
+            const count = Math.floor(share);
+            return { type, count, remainder: share - count };
+        });
+        // Bagi sisa kotak menurut pecahan terbesar. Jika sama, urutannya acak.
+        const remainderOrder = shuffleArray(allocation).sort((a, b) => b.remainder - a.remainder);
+        const remaining = specialCount - allocation.reduce((total, item) => total + item.count, 0);
+        remainderOrder.slice(0, remaining).forEach(item => item.count++);
+
+        const boxTypes = Array(questionCount).fill("quiz");
+        for (const { type, count } of allocation) {
+            boxTypes.push(...Array(count).fill(type));
+        }
+
+        return shuffleArray(boxTypes).map((type, index) => ({
+            id: `box-${index + 1}`, number: index + 1, type, used: false
+        }));
     }
 
 
@@ -433,16 +420,16 @@ Dependencies:
             return;
         }
 
-        const totalBoxes = Number(boxCountInput.value);
+        const questionCount = Number(boxCountInput.value);
+        const minimum = names.length * MBStorage.QUESTIONS_PER_PLAYER;
 
         if (
-            !Number.isInteger(totalBoxes) ||
-            totalBoxes < 1 ||
-            totalBoxes > 100
+            !Number.isInteger(questionCount) ||
+            questionCount < minimum ||
+            questionCount % names.length !== 0
         ) {
-            alert(
-                "Jumlah mystery box harus antara 1 sampai 100."
-            );
+            updateBoxPlan();
+            boxCountInput.focus();
 
             return;
         }
@@ -450,15 +437,17 @@ Dependencies:
         const activeQuestions =
             MBStorage.getActiveQuestions();
 
-        if (activeQuestions.length === 0) {
+        if (activeQuestions.length < questionCount) {
             alert(
-                "Belum ada pertanyaan aktif. " +
-                "Silakan tambahkan pertanyaan melalui Admin Panel."
+                `Diperlukan ${questionCount} soal aktif agar soal tidak berulang. ` +
+                `Bank soal saat ini memiliki ${activeQuestions.length}. Tambahkan soal melalui Panel Admin.`
             );
 
             return;
         }
 
+        MBStorage.getGameHistory();
+        sessionId = MBStorage.createId();
         currentSettings = MBStorage.getSettings();
 
         players = names.map(
@@ -481,7 +470,8 @@ Dependencies:
         );
 
         boxes = generateBoxes(
-            totalBoxes,
+            questionCount,
+            names.length * MBStorage.SPECIAL_BOXES_PER_PLAYER,
             currentSettings
         );
 
@@ -491,14 +481,15 @@ Dependencies:
 
         pendingTurn = null;
 
-        questionPool = activeQuestions;
-        shuffleQuestionPool();
+        questionPool = shuffleArray(activeQuestions).slice(0, questionCount);
+        questionIndex = 0;
 
         saveGameSession();
         showGameBoard();
     }
 
     function showGameBoard() {
+        window.MBEffects.setMusic("game");
         hideElement(setupSection);
         hideElement(resumeSection);
 
@@ -625,7 +616,7 @@ Dependencies:
     // =====================================================
 
     function selectBox(boxId) {
-        if (gameFinished || pendingTurn) {
+        if (gameFinished || pendingTurn || turnLeaderboardTimer !== null || nextTurnTimer !== null) {
             return;
         }
 
@@ -653,10 +644,13 @@ Dependencies:
 
         updateGameDisplay();
 
+        const previousOrder = getSortedPlayers().map(player => player.id);
+        window.MBEffects.play(box.type === "quiz" ? "open" : box.type);
+
         if (box.type === "quiz") {
-            handleQuizBox(box, player);
+            handleQuizBox(box, player, previousOrder);
         } else {
-            handleSpecialBox(box.type, player);
+            handleSpecialBox(box.type, player, previousOrder);
         }
     }
 
@@ -711,7 +705,7 @@ Dependencies:
     // QUIZ BOX
     // =====================================================
 
-    function handleQuizBox(box, player) {
+    function handleQuizBox(box, player, previousOrder) {
         const question = getNextQuestion();
 
         if (!question) {
@@ -729,7 +723,7 @@ Dependencies:
         }
 
         const durationMs = Math.max(1, Number(currentSettings.timerDuration) || 20) * 1000;
-        pendingTurn = { type: "quiz", question, durationMs, remainingMs: durationMs };
+        pendingTurn = { type: "quiz", question, durationMs, remainingMs: durationMs, previousOrder };
 
         saveGameSession();
         showQuizModal(player, question);
@@ -880,6 +874,7 @@ Dependencies:
             return;
         }
 
+        window.MBEffects.setMusic(`quiz-${String(pendingTurn.question.difficulty).toLowerCase()}`);
         timerInterval = setInterval(function () {
             const remainingMs = getQuizTimeRemaining();
             const nextSeconds = Math.ceil(remainingMs / 1000);
@@ -890,6 +885,7 @@ Dependencies:
                 seconds = nextSeconds;
                 pendingTurn.remainingMs = remainingMs;
                 updateTimerDisplay(seconds);
+                window.MBEffects.play(seconds <= 3 ? "tickUrgent" : "tick");
                 saveGameSession();
             }
         }, 200);
@@ -962,6 +958,8 @@ Dependencies:
             !isTimeout &&
             selectedAnswer === question.answer;
 
+        window.MBEffects.play(isTimeout ? "timeout" : isCorrect ? "correct" : "wrong");
+
         let earnedPoints = 0;
 
         if (isCorrect) {
@@ -990,6 +988,7 @@ Dependencies:
     }
 
     function renderQuizResult(question, { selectedAnswer, isTimeout, earnedPoints }) {
+        window.MBEffects.setMusic("game");
         modalContent.querySelector(".quiz-timer").classList.add("hidden");
         modalContent.querySelector(".quiz-points-label").classList.add("hidden");
 
@@ -1092,7 +1091,7 @@ Dependencies:
     // SPECIAL BOXES
     // =====================================================
 
-    function handleSpecialBox(type, player) {
+    function handleSpecialBox(type, player, previousOrder) {
         let title = "";
 
         let icon = "";
@@ -1104,14 +1103,12 @@ Dependencies:
         switch (type) {
 
             case "bomb":
-
-                icon = "💣";
-
-                title = "BOOM!";
-
-                points = -Math.abs(
-                    Number(currentSettings.bombPoints) || 0
-                );
+            case "unlucky": {
+                const isBomb = type === "bomb";
+                icon = isBomb ? "💣" : "🍂";
+                title = isBomb ? "BOOM!" : "UNLUCKY BOX";
+                const bombPenalty = Math.abs(Number(currentSettings.bombPoints) || 0);
+                points = -(isBomb ? bombPenalty : Math.ceil(bombPenalty / 2));
 
                 player.score += points;
 
@@ -1120,6 +1117,7 @@ Dependencies:
                     `${Math.abs(points)} poin.`;
 
                 break;
+            }
 
 
             case "lucky":
@@ -1183,7 +1181,7 @@ Dependencies:
         }
 
 
-        pendingTurn = { type, result: { title, icon, points, description } };
+        pendingTurn = { type, result: { title, icon, points, description }, previousOrder };
         saveGameSession();
         renderSpecialResult(player, pendingTurn.result);
         renderLeaderboard();
@@ -1237,24 +1235,16 @@ Dependencies:
             return;
         }
 
+        const { previousOrder } = pendingTurn;
         closeModal();
         pendingTurn = null;
         turnIndex++;
 
-        const remaining = boxes.filter(
-            box => !box.used
-        ).length;
-
-        renderLeaderboard();
-
-        if (remaining === 0) {
-            finishGame();
-            return;
+        if (boxes.some(box => !box.used)) {
+            updateGameDisplay();
         }
-
-        updateGameDisplay();
-
         saveGameSession();
+        showTurnLeaderboard(previousOrder);
     }
 
 
@@ -1262,8 +1252,8 @@ Dependencies:
     // LEADERBOARD SORTING
     // =====================================================
 
-    function getSortedPlayers() {
-        return [...players].sort(
+    function getSortedPlayers(sourcePlayers = players) {
+        return [...sourcePlayers].sort(
             function (a, b) {
 
                 // 1. Highest score.
@@ -1281,6 +1271,147 @@ Dependencies:
 
             }
         );
+    }
+
+    function showTurnLeaderboard(previousOrder) {
+        const rankedPlayers = getSortedPlayers();
+        const previousRanks = new Map(previousOrder?.map((id, index) => [id, index + 1]));
+        const topPlayers = rankedPlayers.slice(0, 5).map((player, index) => {
+            const rank = index + 1;
+            const previousRank = previousRanks.get(player.id) ?? rank;
+            return { player, rank, previousRank, change: previousRank - rank };
+        });
+        const moved = topPlayers.some(entry => entry.change !== 0);
+        const leader = topPlayers[0];
+        const newLeader = leader.change > 0;
+
+        turnLeaderboardRound.textContent = `Setelah giliran ${turnIndex}`;
+        turnLeaderboardList.innerHTML = topPlayers.map(renderTurnLeaderboardRow).join("");
+
+        const departures = rankedPlayers.slice(5).map((player, index) => ({
+            player,
+            rank: index + 6,
+            previousRank: previousRanks.get(player.id)
+        })).filter(entry => entry.previousRank <= 5);
+        const departureText = departures.map(({ player, rank }) => `${player.name} turun ke peringkat ${rank}.`).join(" ");
+        const leaderText = newLeader ? `${leader.player.name} mengambil alih posisi pertama!` : "";
+        const statusText = [leaderText, departureText].filter(Boolean).join(" ");
+        turnLeaderboardStatus.textContent = statusText || (previousOrder && !moved ? "Posisi Top 5 tetap." : "");
+        turnLeaderboardStatus.classList.toggle("has-new-leader", newLeader);
+
+        turnLeaderboardDialog.showModal();
+        window.MBEffects.play(newLeader ? "leader" : "leaderboard");
+
+        if (moved && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            animateTurnLeaderboard(topPlayers, departures);
+            if (newLeader) {
+                playLeaderboardConfetti();
+            }
+        }
+
+        turnLeaderboardTimer = setTimeout(() => turnLeaderboardDialog.close(), 5000);
+    }
+
+    function playLeaderboardConfetti() {
+        const colors = ["#FFAC24", "#0EA789", "#E94E77", "#F67D32", "#488DD8", "#E6A33C"];
+        const shapes = ["star", "ribbon", "chip", "dot", "ribbon"];
+        const spread = Math.min(turnLeaderboardConfetti.clientWidth * 0.46, 210);
+
+        for (const direction of [-1, 1]) {
+            for (const [wave, count] of [10, 6].entries()) {
+                for (let index = 0; index < count; index++) {
+                    const shape = shapes[index % shapes.length];
+                    const particle = document.createElement("span");
+                    particle.className = `confetti-${shape}`;
+                    particle.style[direction > 0 ? "left" : "right"] = "5%";
+                    particle.style.top = `${27 + wave * 10}%`;
+                    particle.style.backgroundColor = shape === "star" ? colors[0] : colors[(index + wave) % colors.length];
+
+                    const distance = direction * spread * (0.28 + 0.72 * index / (count - 1));
+                    const rise = 48 + (index % 4) * 18 + wave * 12;
+                    const fall = 46 + (index % 4) * 18;
+                    const spin = direction * (150 + index * 41);
+                    turnLeaderboardConfetti.appendChild(particle);
+
+                    particle.animate([
+                        { transform: "translate(0, 0) scale(0.2)", opacity: 0 },
+                        { transform: `translate(${distance * 0.58}px, -${rise}px) rotate(${spin / 2}deg)`, opacity: 1, offset: 0.42 },
+                        { transform: `translate(${distance}px, ${fall}px) rotate(${spin}deg)`, opacity: 0 }
+                    ], { delay: 580 + wave * 610 + (index % 3) * 34, duration: 940 + (index % 3) * 110, easing: "ease-out" }).onfinish = () => particle.remove();
+                }
+            }
+        }
+    }
+
+    function renderTurnLeaderboardRow({ player, rank, change }) {
+        const movement = change > 0 ? "Naik" : "Turun";
+        const arrow = change > 0 ? "↑" : "↓";
+        const direction = change > 0 ? "up" : change < 0 ? "down" : "";
+        const badge = change ? `<span role="img" aria-label="${movement} ${Math.abs(change)} peringkat">${arrow} ${Math.abs(change)}</span>` : "";
+        return `
+            <li class="turn-leaderboard-row">
+                <strong>${rank}</strong>
+                <strong class="turn-leaderboard-name">${escapeHTML(player.name)}</strong>
+                <span class="turn-leaderboard-change ${direction}">${badge}</span>
+                <span class="turn-leaderboard-score">${escapeHTML(player.score)} poin</span>
+            </li>
+        `;
+    }
+
+    function animateTurnLeaderboard(topPlayers, departures) {
+        const rows = [...turnLeaderboardList.children];
+        const rowStep = rows.length > 1 ? rows[1].offsetTop - rows[0].offsetTop : rows[0].offsetHeight;
+        const timing = { delay: 120, duration: 620, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" };
+
+        topPlayers.forEach(({ change, previousRank, rank }, index) => {
+            if (!change) {
+                return;
+            }
+            const fromY = (Math.min(previousRank, 6) - rank) * rowStep;
+            rows[index].animate([
+                { transform: `translateY(${fromY}px)`, opacity: previousRank > 5 ? 0 : 0.7 },
+                { transform: "translateY(0)", opacity: 1 }
+            ], timing);
+        });
+
+        for (const { player, previousRank } of departures) {
+            turnLeaderboardList.insertAdjacentHTML("beforeend", renderTurnLeaderboardRow({ player, rank: previousRank, change: 0 }));
+            const row = turnLeaderboardList.lastElementChild;
+            row.setAttribute("aria-hidden", "true");
+            row.classList.add("is-leaving");
+            row.style.top = `${rows[previousRank - 1].offsetTop}px`;
+            row.animate([
+                { transform: "translateY(0)", opacity: 0.7 },
+                { transform: `translateY(${(6 - previousRank) * rowStep}px)`, opacity: 0 }
+            ], { ...timing, fill: "both" }).onfinish = () => row.remove();
+        }
+    }
+
+    function finishTurnLeaderboard() {
+        clearTimeout(turnLeaderboardTimer);
+        turnLeaderboardTimer = null;
+        turnLeaderboardConfetti.replaceChildren();
+        window.MBEffects.stop();
+
+        if (boxes.every(box => box.used)) {
+            finishGame();
+        } else {
+            showNextTurn();
+        }
+    }
+
+    function showNextTurn() {
+        nextTurnPlayer.textContent = getCurrentPlayer().name;
+        nextTurnProgress.textContent = `Ronde ${getCurrentRound()} · Giliran ${turnIndex + 1} dari ${getTotalTurns()}`;
+        nextTurnDialog.showModal();
+        window.MBEffects.play("next");
+        nextTurnTimer = setTimeout(() => nextTurnDialog.close(), 2000);
+    }
+
+    function finishNextTurn() {
+        clearTimeout(nextTurnTimer);
+        nextTurnTimer = null;
+        boxGrid.querySelector(".mystery-box:not(:disabled)")?.focus({ preventScroll: true });
     }
 
 
@@ -1347,6 +1478,7 @@ Dependencies:
         }
 
         const session = {
+            id: sessionId,
             players: players,
 
             boxes: boxes,
@@ -1390,6 +1522,7 @@ Dependencies:
             return;
         }
 
+        sessionId = session.id ?? MBStorage.createId();
         players = session.players;
         boxes = session.boxes;
         turnIndex = session.turnIndex;
@@ -1432,12 +1565,10 @@ Dependencies:
     // FINAL LEADERBOARD
     // =====================================================
 
-    function renderFinalLeaderboard() {
+    function renderFinalLeaderboard(sortedPlayers) {
         if (!finalLeaderboardBody) {
             return;
         }
-
-        const sortedPlayers = getSortedPlayers();
 
         finalLeaderboardBody.innerHTML = "";
 
@@ -1457,10 +1588,6 @@ Dependencies:
                     </td>
 
                     <td>
-                        <strong>${player.score}</strong>
-                    </td>
-
-                    <td>
                         ${player.correctAnswers}
                     </td>
 
@@ -1472,12 +1599,77 @@ Dependencies:
                         ${formatTime(player.timeSpent)}
                     </td>
 
+                    <td>
+                        <strong>${player.score}</strong>
+                    </td>
+
                 `;
 
                 finalLeaderboardBody.appendChild(row);
 
             }
         );
+    }
+
+    function showGameHistory() {
+        const historySelect = document.getElementById("gameHistorySelect");
+        const historyPicker = document.getElementById("gameHistoryPicker");
+        const historyWinner = document.getElementById("gameHistoryWinner");
+        const emptyMessage = document.getElementById("gameHistoryEmpty");
+        const leaderboard = document.getElementById("resultLeaderboard");
+        const dateFormat = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "medium" });
+        let history = [];
+
+        function showSelectedGame() {
+            const game = history.find(entry => entry.id === historySelect.value);
+            if (game) {
+                const rankedPlayers = getSortedPlayers(game.players);
+                historyWinner.textContent = `Pemenang: ${rankedPlayers[0].name}`;
+                renderFinalLeaderboard(rankedPlayers);
+            }
+        }
+
+        function refreshHistory() {
+            const selectedId = historySelect.value;
+            history = MBStorage.getGameHistory();
+            historySelect.replaceChildren();
+
+            for (const game of history) {
+                const finishedAt = dateFormat.format(new Date(game.finishedAt));
+                historySelect.add(new Option(finishedAt, game.id));
+            }
+
+            if (history.some(game => game.id === selectedId)) {
+                historySelect.value = selectedId;
+            }
+
+            emptyMessage.classList.toggle("hidden", history.length > 0);
+            historyPicker.classList.toggle("hidden", history.length === 0);
+            leaderboard.classList.toggle("hidden", history.length === 0);
+            showSelectedGame();
+        }
+
+        hideElement(setupSection);
+        hideElement(document.getElementById("completedGameSummary"));
+        hideElement(document.getElementById("completedGameActions"));
+        hideElement(gameStatus);
+        showElement(document.getElementById("gameHistory"));
+        resultSection.classList.add("history-view");
+        showElement(resultSection);
+        document.title = "Riwayat Leaderboard - Mystery Box Challenge";
+
+        refreshHistory();
+        historySelect.addEventListener("change", showSelectedGame);
+        window.addEventListener("storage", event => {
+            if (event.key === MBStorage.STORAGE_KEYS.GAME_HISTORY || event.key === null) {
+                refreshHistory();
+            }
+        });
+        window.addEventListener("pageshow", event => {
+            if (event.persisted) {
+                refreshHistory();
+            }
+        });
     }
 
 
@@ -1487,6 +1679,7 @@ Dependencies:
 
     function finishGame() {
         gameFinished = true;
+        window.MBEffects.setMusic("results");
 
         stopTimer();
 
@@ -1497,6 +1690,7 @@ Dependencies:
         showElement(resultSection);
 
         const sortedPlayers = getSortedPlayers();
+        window.MBEffects.play("finish");
 
         const winner = sortedPlayers[0];
 
@@ -1535,7 +1729,7 @@ Dependencies:
 
         }
 
-        renderFinalLeaderboard();
+        renderFinalLeaderboard(sortedPlayers);
 
         saveGameSession();
 
@@ -1580,11 +1774,16 @@ Dependencies:
     // =====================================================
 
     function showRestartDialog() {
+        restartDialogDescription.textContent = gameFinished
+            ? "Hasil akhir tetap tersedia di Riwayat Leaderboard."
+            : "Progres permainan ini akan dihapus.";
         restartDialog.returnValue = "";
         restartDialog.showModal();
     }
 
     function restartGame() {
+        window.MBEffects.stop();
+        window.MBEffects.setMusic("menu");
         stopTimer();
 
         closeModal();
@@ -1604,6 +1803,7 @@ Dependencies:
         pendingTurn = null;
 
         gameFinished = false;
+        sessionId = null;
 
         currentSettings = null;
 
@@ -1632,6 +1832,8 @@ Dependencies:
     function initializeEventListeners() {
         resumeGameButton.addEventListener("click", resumeGame);
         newGameButton.addEventListener("click", showRestartDialog);
+        turnLeaderboardDialog.addEventListener("close", finishTurnLeaderboard);
+        nextTurnDialog.addEventListener("close", finishNextTurn);
         restartDialog.addEventListener("close", function () {
             if (restartDialog.returnValue === "restart") {
                 restartGame();
@@ -1669,6 +1871,8 @@ Dependencies:
             );
 
         }
+
+        boxCountInput.addEventListener("input", updateBoxPlan);
 
 
         if (startGameButton) {
@@ -1726,6 +1930,11 @@ Dependencies:
                 "Pastikan storage.js dimuat sebelum game.js."
             );
 
+            return;
+        }
+
+        if (new URLSearchParams(window.location.search).get("view") === "history") {
+            showGameHistory();
             return;
         }
 
