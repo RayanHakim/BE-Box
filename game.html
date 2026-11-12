@@ -13,19 +13,30 @@
 
     <main class="game-wrap">
 
-        <nav class="topbar">
+        <nav class="topbar game-topbar">
             <a href="index.html" class="brand">
                 <span class="brand-mark">?</span>
                 MYSTERY<span>BOX</span>
             </a>
 
-            <div class="game-nav-actions">
-                <span class="game-status" id="gameStatus">
-                    Menunggu permainan
-                </span>
+            <span class="game-status" id="gameStatus">
+                Menunggu permainan
+            </span>
 
-                <a href="index.html" class="admin-link">
-                    Keluar
+            <div class="site-nav-actions">
+                <button type="button" class="site-icon-control site-sound-toggle" id="gameMusicToggle"
+                    aria-label="Suara situs" aria-pressed="true" title="Matikan suara">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 17V6l11-2v11M9 9l11-2"/>
+                        <ellipse cx="6.5" cy="17" rx="2.5" ry="2" fill="currentColor" stroke="none"/>
+                        <ellipse cx="17.5" cy="15" rx="2.5" ry="2" fill="currentColor" stroke="none"/>
+                        <path class="sound-off-slash" d="m3 3 18 18"/>
+                    </svg>
+                </button>
+                <a href="index.html" class="site-icon-control" aria-label="Keluar ke beranda" title="Keluar ke beranda">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M13 20H5V4h8v5m0 6v5m-4-8h12m-4-4 4 4-4 4"/>
+                    </svg>
                 </a>
             </div>
         </nav>
@@ -64,19 +75,20 @@
                         id="playerCount"
                         min="2"
                         max="20"
-                        value="5"
+                        value="4"
                     >
                 </div>
 
                 <div class="form-group">
-                    <label for="boxCount">Jumlah Mystery Box</label>
+                    <label for="boxCount">Jumlah kotak soal</label>
                     <input
                         type="number"
                         id="boxCount"
-                        min="2"
-                        max="100"
-                        value="30"
+                        min="20"
+                        value="20"
+                        aria-describedby="boxPlan"
                     >
+                    <p id="boxPlan" class="box-plan" aria-live="polite"></p>
                 </div>
 
                 <div class="form-group">
@@ -194,19 +206,32 @@
 
             <div class="result-card">
 
-                <div class="eyebrow">GAME COMPLETED</div>
+                <div class="result-summary" id="completedGameSummary">
+                    <div class="eyebrow">GAME COMPLETED</div>
 
-                <h1>Permainan <span>Selesai!</span></h1>
+                    <h1>Permainan <span>Selesai!</span></h1>
 
-                <p id="winnerMessage">
-                    Selamat kepada pemenang!
-                </p>
+                    <p id="winnerMessage">
+                        Selamat kepada pemenang!
+                    </p>
 
-                <div class="winner-display" id="winnerDisplay">
-                    <!-- Pemenang ditampilkan melalui JavaScript -->
+                    <div class="winner-display" id="winnerDisplay">
+                        <!-- Pemenang ditampilkan melalui JavaScript -->
+                    </div>
                 </div>
 
-                <div class="result-leaderboard">
+                <div class="hidden" id="gameHistory">
+                    <h1>Riwayat <span>Leaderboard</span></h1>
+                    <p class="hidden" id="gameHistoryEmpty">Belum ada permainan yang selesai.</p>
+
+                    <div class="form-group history-picker" id="gameHistoryPicker">
+                        <label for="gameHistorySelect">Pilih permainan</label>
+                        <select id="gameHistorySelect"></select>
+                        <p id="gameHistoryWinner" aria-live="polite"></p>
+                    </div>
+                </div>
+
+                <div class="result-leaderboard" id="resultLeaderboard">
                     <h2>Hasil Akhir</h2>
 
                     <div class="leaderboard-table-wrapper">
@@ -214,11 +239,12 @@
 
                             <thead>
                                 <tr>
-                                    <th>Rank</th>
-                                    <th>Nama Pemain</th>
-                                    <th>Benar</th>
-                                    <th>Waktu</th>
-                                    <th>Skor</th>
+                                    <th scope="col">Rank</th>
+                                    <th scope="col">Nama Pemain</th>
+                                    <th scope="col">Benar</th>
+                                    <th scope="col">Giliran</th>
+                                    <th scope="col">Waktu</th>
+                                    <th scope="col">Skor</th>
                                 </tr>
                             </thead>
 
@@ -230,7 +256,7 @@
                     </div>
                 </div>
 
-                <div class="result-actions">
+                <div class="result-actions" id="completedGameActions">
 
                     <button
                         type="button"
@@ -247,6 +273,10 @@
                     >
                         Main Lagi
                     </button>
+
+                    <a href="game.html?view=history" class="btn btn-ghost">
+                        Riwayat Leaderboard
+                    </a>
 
                     <a href="index.html" class="btn btn-ghost">
                         Kembali ke Home
@@ -286,7 +316,29 @@
 
     </div>
 
-    <dialog class="modal-card restart-dialog" id="restartDialog"
+    <dialog class="modal-card game-dialog leaderboard-dialog" id="turnLeaderboardDialog"
+        aria-labelledby="turnLeaderboardTitle" aria-describedby="turnLeaderboardRound turnLeaderboardStatus">
+        <div class="turn-leaderboard-confetti" id="turnLeaderboardConfetti" aria-hidden="true"></div>
+        <h2 id="turnLeaderboardTitle">Top 5 Leaderboard</h2>
+        <p class="turn-leaderboard-round" id="turnLeaderboardRound"></p>
+        <ol class="turn-leaderboard-list" id="turnLeaderboardList" role="list"></ol>
+        <p class="turn-leaderboard-status" id="turnLeaderboardStatus"></p>
+        <form method="dialog">
+            <button type="submit" class="turn-leaderboard-skip" autofocus>Lewati</button>
+        </form>
+    </dialog>
+
+    <dialog class="modal-card game-dialog next-turn-dialog" id="nextTurnDialog"
+        aria-labelledby="nextTurnTitle nextTurnPlayer" aria-describedby="nextTurnProgress">
+        <h2 id="nextTurnTitle">Giliran berikutnya</h2>
+        <p class="next-turn-player" id="nextTurnPlayer"></p>
+        <p class="next-turn-progress" id="nextTurnProgress"></p>
+        <form method="dialog" class="modal-actions">
+            <button type="submit" class="btn btn-primary" autofocus>Pilih Kotak</button>
+        </form>
+    </dialog>
+
+    <dialog class="modal-card game-dialog" id="restartDialog"
         aria-labelledby="restartDialogTitle" aria-describedby="restartDialogDescription">
         <div class="modal-content">
             <h2 id="restartDialogTitle">Mulai permainan baru?</h2>
@@ -299,9 +351,12 @@
         </form>
     </dialog>
 
+    <audio id="gameMusic" src="assets/menu-background.wav" preload="none" loop></audio>
+
     <!-- JAVASCRIPT -->
     <script src="js/storage.js"></script>
     <script src="js/excel.js"></script>
+    <script src="js/game-effects.js"></script>
     <script src="js/game.js"></script>
 
 </body>

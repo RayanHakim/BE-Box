@@ -159,7 +159,7 @@ LocalStorage melalui MBStorage.
         bombCount: getElement("bombCount"),
         luckyCount: getElement("luckyCount"),
         doubleCount: getElement("doubleCount"),
-        emptyCount: getElement("emptyCount")
+        unluckyCount: getElement("unluckyCount")
     };
 
     const saveSettingsButton = getElement("saveSettingsButton");
@@ -907,25 +907,25 @@ LocalStorage melalui MBStorage.
             bombCount: {
                 min: 0,
                 max: 100,
-                label: "Jumlah Bomb"
+                label: "Bobot Bomb"
             },
 
             luckyCount: {
                 min: 0,
                 max: 100,
-                label: "Jumlah Lucky"
+                label: "Bobot Lucky"
             },
 
             doubleCount: {
                 min: 0,
                 max: 100,
-                label: "Jumlah Double"
+                label: "Bobot Power Up"
             },
 
-            emptyCount: {
+            unluckyCount: {
                 min: 0,
                 max: 100,
-                label: "Jumlah Empty"
+                label: "Bobot Unlucky"
             }
         };
 
@@ -943,6 +943,10 @@ LocalStorage melalui MBStorage.
                     `${rule.min} dan ${rule.max}.`
                 );
             }
+        }
+
+        if (settings.bombCount + settings.luckyCount + settings.doubleCount + settings.unluckyCount === 0) {
+            return "Isi bobot minimal satu jenis kotak spesial.";
         }
 
         return null;

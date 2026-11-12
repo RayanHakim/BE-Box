@@ -18,9 +18,20 @@
                 MYSTERY<span>BOX</span>
             </div>
 
-            <a class="admin-link" href="admin.html">
-                Panel Admin <span aria-hidden="true">↗</span>
-            </a>
+            <div class="site-nav-actions">
+                <button type="button" class="site-icon-control site-sound-toggle" id="gameMusicToggle"
+                    aria-label="Suara situs" aria-pressed="true" title="Matikan suara">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 17V6l11-2v11M9 9l11-2"/>
+                        <ellipse cx="6.5" cy="17" rx="2.5" ry="2" fill="currentColor" stroke="none"/>
+                        <ellipse cx="17.5" cy="15" rx="2.5" ry="2" fill="currentColor" stroke="none"/>
+                        <path class="sound-off-slash" d="m3 3 18 18"/>
+                    </svg>
+                </button>
+                <a class="admin-link" href="admin.html">
+                    Panel Admin <span aria-hidden="true">↗</span>
+                </a>
+            </div>
         </header>
 
         <main class="home-main">
@@ -30,9 +41,12 @@
 
                     <p>Pilih mystery box bersama teman, jawab pertanyaan, dan kumpulkan poin untuk jadi juara.</p>
 
-                    <a class="btn btn-primary" href="game.html">
-                        <span id="startGameLabel">Mulai Permainan</span> <span aria-hidden="true">→</span>
-                    </a>
+                    <div class="home-actions">
+                        <a class="btn btn-primary" href="game.html">
+                            <span id="startGameLabel">Mulai Permainan</span> <span aria-hidden="true">→</span>
+                        </a>
+                        <a class="btn btn-ghost" href="game.html?view=history">Riwayat Permainan</a>
+                    </div>
                 </div>
 
                 <div class="home-art" aria-hidden="true">
@@ -50,8 +64,8 @@
                     <dd id="activeQuestionCount">—</dd>
                 </div>
                 <div>
-                    <dt>Kotak spesial</dt>
-                    <dd id="specialBoxCount">—</dd>
+                    <dt>Giliran minimum per pemain</dt>
+                    <dd id="minimumTurns">—</dd>
                 </div>
                 <div>
                     <dt>Detik per soal</dt>
@@ -62,7 +76,9 @@
 
     </div>
 
+    <audio id="gameMusic" src="assets/menu-background.wav" preload="none" loop></audio>
     <script src="js/storage.js"></script>
+    <script src="js/game-effects.js"></script>
     <script src="js/app.js"></script>
 
 </body>
