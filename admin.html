@@ -166,6 +166,16 @@
 
                 </div>
 
+                <div class="question-excel">
+                    <div class="question-excel-actions">
+                        <button type="button" class="btn btn-ghost" id="importQuestionsButton" aria-describedby="questionExcelHelp">Impor Excel</button>
+                        <button type="button" class="btn btn-ghost" id="exportQuestionsButton">Ekspor Excel</button>
+                        <input type="file" id="questionExcelFile" accept=".xlsx" hidden>
+                    </div>
+                    <p id="questionExcelHelp">Ekspor untuk mendapatkan format kolom. Saat impor, pertahankan ID untuk memperbarui soal dan kosongkan ID untuk menambah soal baru.</p>
+                    <p class="question-excel-status" id="questionExcelStatus" role="status"></p>
+                </div>
+
                 <div class="question-filter">
 
                     <input

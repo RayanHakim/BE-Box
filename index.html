@@ -6,76 +6,61 @@
     <title>Mystery Box Challenge</title>
 
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/home.css">
 </head>
-<body>
+<body class="home-page">
 
-    <main class="home-wrap">
+    <div class="home-wrap">
 
-        <nav class="topbar">
+        <header class="topbar">
             <div class="brand">
-                <span class="brand-mark">?</span>
+                <span class="brand-mark" aria-hidden="true">?</span>
                 MYSTERY<span>BOX</span>
             </div>
 
             <a class="admin-link" href="admin.html">
-                Admin Panel ↗
+                Panel Admin <span aria-hidden="true">↗</span>
             </a>
-        </nav>
+        </header>
 
-        <section class="hero">
+        <main class="home-main">
+            <section class="home-hero" aria-labelledby="home-title">
+                <div class="home-intro">
+                    <h1 id="home-title">Pilih kotak.<br>Uji keberuntungan.</h1>
 
-            <div class="eyebrow">
-                THE ULTIMATE GROUP QUIZ
-            </div>
+                    <p>Pilih mystery box bersama teman, jawab pertanyaan, dan kumpulkan poin untuk jadi juara.</p>
 
-            <h1>
-                Choose your box.<br>
-                <span>Test your luck.</span>
-            </h1>
-
-            <p>
-                Ambil mystery box, jawab pertanyaan,
-                kumpulkan poin, dan jadilah juara!
-            </p>
-
-            <div class="hero-actions">
-
-                <a class="btn btn-primary" href="game.html">
-                    <span id="startGameLabel">Mulai Permainan</span> <span>→</span>
-                </a>
-
-                <a class="btn btn-ghost" href="admin.html">
-                    Pengaturan Admin
-                </a>
-
-            </div>
-
-            <div class="mini-stats">
-
-                <div>
-                    <b>01</b>
-                    <small>Pilih box</small>
+                    <a class="btn btn-primary" href="game.html">
+                        <span id="startGameLabel">Mulai Permainan</span> <span aria-hidden="true">→</span>
+                    </a>
                 </div>
 
-                <div>
-                    <b>02</b>
-                    <small>Jawab tantangan</small>
+                <div class="home-art" aria-hidden="true">
+                    <div class="home-box">
+                        <div class="home-box-side"></div>
+                        <div class="home-box-front">?</div>
+                        <div class="home-box-top"></div>
+                    </div>
                 </div>
+            </section>
 
+            <dl class="mini-stats" aria-label="Pengaturan permainan">
                 <div>
-                    <b>03</b>
-                    <small>Raih poin</small>
+                    <dt>Pertanyaan aktif</dt>
+                    <dd id="activeQuestionCount">—</dd>
                 </div>
+                <div>
+                    <dt>Kotak spesial</dt>
+                    <dd id="specialBoxCount">—</dd>
+                </div>
+                <div>
+                    <dt>Detik per soal</dt>
+                    <dd id="secondsPerQuestion">—</dd>
+                </div>
+            </dl>
+        </main>
 
-            </div>
-
-        </section>
-
-        <footer>
-            LOCAL GAME · PLAY TOGETHER · HAVE FUN
-        </footer>
-
-    </main>
+    </div>
 
     <script src="js/storage.js"></script>
     <script src="js/app.js"></script>
