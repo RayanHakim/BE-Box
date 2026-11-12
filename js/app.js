@@ -251,9 +251,25 @@ Tidak membutuhkan backend.
             return;
         }
 
+        const label = document.getElementById("startGameLabel");
+
+        function updateStartLabel() {
+            label.textContent = window.MBStorage?.getUnfinishedSession()
+                ? "Lanjutkan Permainan"
+                : "Mulai Permainan";
+        }
+
+        updateStartLabel();
+        window.addEventListener("pageshow", updateStartLabel);
+        window.addEventListener("storage", updateStartLabel);
+
         startButton.addEventListener(
             "click",
             function (event) {
+
+                if (window.MBStorage?.getUnfinishedSession()) {
+                    return;
+                }
 
                 const data = getGameData();
 

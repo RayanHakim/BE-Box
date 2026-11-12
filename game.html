@@ -30,6 +30,22 @@
             </div>
         </nav>
 
+        <section class="setup-section hidden" id="resumeSection" aria-labelledby="resumeHeading">
+            <div class="section-heading">
+                <h1 id="resumeHeading">Lanjutkan <span>Permainan</span></h1>
+                <p>Progres permainan sebelumnya tersimpan di browser ini.</p>
+            </div>
+
+            <div class="setup-card">
+                <button type="button" class="btn btn-primary btn-block" id="resumeGameButton">
+                    Lanjutkan Permainan →
+                </button>
+                <button type="button" class="btn btn-ghost btn-block" id="newGameButton">
+                    Mulai Permainan Baru
+                </button>
+            </div>
+        </section>
+
         <!-- SETUP PEMAIN -->
         <section class="setup-section" id="setupSection">
 
@@ -269,6 +285,19 @@
         </div>
 
     </div>
+
+    <dialog class="modal-card restart-dialog" id="restartDialog"
+        aria-labelledby="restartDialogTitle" aria-describedby="restartDialogDescription">
+        <div class="modal-content">
+            <h2 id="restartDialogTitle">Mulai permainan baru?</h2>
+            <p id="restartDialogDescription">Progres permainan sebelumnya akan dihapus.</p>
+        </div>
+
+        <form method="dialog" class="modal-actions">
+            <button type="submit" class="btn btn-ghost" value="cancel" autofocus>Batal</button>
+            <button type="submit" class="btn btn-primary" value="restart">Mulai Permainan Baru</button>
+        </form>
+    </dialog>
 
     <!-- JAVASCRIPT -->
     <script src="js/storage.js"></script>
