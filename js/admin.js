@@ -120,6 +120,10 @@ LocalStorage melalui MBStorage.
     const questionTableBody = getElement("questionTableBody");
     const emptyQuestionState = getElement("emptyQuestionState");
     const addQuestionButton = getElement("addQuestionButton");
+    const importQuestionsButton = getElement("importQuestionsButton");
+    const exportQuestionsButton = getElement("exportQuestionsButton");
+    const questionExcelFile = getElement("questionExcelFile");
+    const questionExcelStatus = getElement("questionExcelStatus");
 
     const questionSearch = getElement("questionSearch");
     const categoryFilter = getElement("categoryFilter");
@@ -604,6 +608,77 @@ LocalStorage melalui MBStorage.
         return null;
     }
 
+    async function runQuestionExcelAction(message, action) {
+        questionExcelStatus.classList.remove("error");
+        questionExcelStatus.textContent = message;
+        importQuestionsButton.disabled = true;
+        exportQuestionsButton.disabled = true;
+
+        try {
+            questionExcelStatus.textContent = await action();
+        } catch (error) {
+            questionExcelStatus.classList.add("error");
+            questionExcelStatus.textContent = error.message || "File Excel gagal diproses.";
+        } finally {
+            importQuestionsButton.disabled = false;
+            exportQuestionsButton.disabled = false;
+        }
+    }
+
+    function questionContentKey({ question, category, difficulty, options, answer, active }) {
+        return JSON.stringify([question, category, difficulty, options.A, options.B, options.C, options.D, answer, active]);
+    }
+
+    async function importQuestions(file) {
+        const rows = await MBExcel.readQuestions(file);
+        const seenIds = new Set();
+
+        for (const { rowNumber, ...question } of rows) {
+            const error = validateQuestionForm(question);
+            if (error) {
+                throw new Error(`Baris ${rowNumber}: ${error}`);
+            }
+            if (question.id && seenIds.has(question.id)) {
+                throw new Error(`Baris ${rowNumber}: ID "${question.id}" sudah dipakai pada baris lain.`);
+            }
+            if (question.id) {
+                seenIds.add(question.id);
+            }
+        }
+
+        const questions = new Map(getQuestions().map(question => [String(question.id), question]));
+        const knownContent = new Set([...questions.values()].map(question => questionContentKey(normalizeQuestion(question))));
+        let added = 0;
+        let updated = 0;
+        let skipped = 0;
+
+        for (const { rowNumber, ...question } of rows) {
+            const key = questionContentKey(question);
+            const existing = questions.get(question.id);
+            if ((existing && key === questionContentKey(normalizeQuestion(existing))) || (!question.id && knownContent.has(key))) {
+                skipped++;
+                continue;
+            }
+
+            if (existing) {
+                updated++;
+            } else {
+                added++;
+            }
+
+            const id = question.id || MBStorage.createId();
+            questions.set(id, { ...question, id });
+            knownContent.add(key);
+        }
+
+        if ((added || updated) && !MBStorage.saveQuestions([...questions.values()])) {
+            throw new Error("Bank soal gagal disimpan. Periksa kapasitas penyimpanan browser.");
+        }
+
+        refreshQuestionDisplay();
+        return `${added} soal ditambahkan, ${updated} diperbarui, ${skipped} sama dengan soal yang sudah ada.`;
+    }
+
     function saveQuestion(event) {
         event.preventDefault();
 
@@ -991,6 +1066,21 @@ LocalStorage melalui MBStorage.
         // Add question
         addQuestionButton?.addEventListener("click", () => {
             openQuestionModal();
+        });
+
+        importQuestionsButton.addEventListener("click", () => questionExcelFile.click());
+        questionExcelFile.addEventListener("change", () => {
+            const [file] = questionExcelFile.files;
+            questionExcelFile.value = "";
+            if (file) {
+                runQuestionExcelAction("Membaca bank soal…", () => importQuestions(file));
+            }
+        });
+        exportQuestionsButton.addEventListener("click", () => {
+            runQuestionExcelAction("Menyiapkan file Excel…", async () => {
+                await MBExcel.exportQuestions(getQuestions().map(normalizeQuestion));
+                return "Unduhan bank-soal.xlsx dimulai.";
+            });
         });
 
         // Submit question form

@@ -1,137 +1,42 @@
 
 /*
 =========================================================
- MYSTERY BOX - EXCEL EXPORT
+ MYSTERY BOX - EXCEL
 =========================================================
-
-Fungsi:
-1. Mengekspor leaderboard pemain.
-2. Membuat file Excel (.xlsx).
-3. Menyediakan CSV sebagai fallback.
-4. Hanya mengekspor hasil permainan.
-
-Data yang diekspor:
-- Peringkat
-- Nama pemain
-- Total poin
-- Jawaban benar
-- Jumlah giliran
-- Total waktu
-
-Tidak mengekspor:
-- Pertanyaan
-- Pilihan jawaban
-- Kunci jawaban
-- Pengaturan admin
+ Ekspor leaderboard dan impor/ekspor bank soal (.xlsx).
 =========================================================
 */
 
 (function () {
     "use strict";
 
-
-    // =====================================================
-    // CONFIGURATION
-    // =====================================================
-
-    const EXCEL_LIBRARY_URL =
-        "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
-
-
-    // =====================================================
-    // LOAD EXCEL LIBRARY
-    // =====================================================
-
+    const QUESTION_SHEET = "Bank Soal";
+    const QUESTION_COLUMNS = ["ID", "Pertanyaan", "Kategori", "Kesulitan", "A", "B", "C", "D", "Kunci Jawaban", "Status"];
     let excelLibraryPromise = null;
 
     function loadExcelLibrary() {
-
-        // Jika library sudah tersedia, langsung gunakan.
-        if (window.XLSX) {
-            return Promise.resolve(window.XLSX);
-        }
-
-        // Mencegah pemuatan script berulang.
-        if (excelLibraryPromise) {
-            return excelLibraryPromise;
-        }
-
-        excelLibraryPromise = new Promise(
-            function (resolve, reject) {
-
-                const existingScript = document.querySelector(
-                    'script[data-mysterybox-xlsx="true"]'
-                );
-
-                if (existingScript) {
-
-                    existingScript.addEventListener(
-                        "load",
-                        function () {
-                            if (window.XLSX) {
-                                resolve(window.XLSX);
-                            } else {
-                                reject(
-                                    new Error(
-                                        "Library Excel gagal dimuat."
-                                    )
-                                );
-                            }
-                        },
-                        { once: true }
-                    );
-
-                    existingScript.addEventListener(
-                        "error",
-                        function () {
-                            reject(
-                                new Error(
-                                    "Tidak dapat memuat library Excel."
-                                )
-                            );
-                        },
-                        { once: true }
-                    );
-
-                    return;
-                }
-
+        if (!excelLibraryPromise) {
+            excelLibraryPromise = new Promise((resolve, reject) => {
                 const script = document.createElement("script");
-
-                script.src = EXCEL_LIBRARY_URL;
-
-                script.async = true;
-
-                script.dataset.mysteryboxXlsx = "true";
-
-                script.onload = function () {
-
+                script.src = "js/vendor/xlsx.mini.min.js";
+                script.onload = () => {
                     if (window.XLSX) {
                         resolve(window.XLSX);
                     } else {
-                        reject(
-                            new Error(
-                                "Library Excel tidak ditemukan."
-                            )
-                        );
+                        script.remove();
+                        reject(new Error("Pustaka Excel gagal dimuat."));
                     }
-
                 };
-
-                script.onerror = function () {
-
-                    reject(
-                        new Error(
-                            "Gagal mengunduh library Excel. Periksa koneksi internet."
-                        )
-                    );
-
+                script.onerror = () => {
+                    script.remove();
+                    reject(new Error("Pustaka Excel gagal dimuat."));
                 };
-
                 document.head.appendChild(script);
-
-            }
-        );
+            }).catch(error => {
+                excelLibraryPromise = null;
+                throw error;
+            });
+        }
 
         return excelLibraryPromise;
     }
@@ -312,7 +217,6 @@ Tidak mengekspor:
 
             const useCSV = confirm(
                 "File Excel tidak dapat dibuat.\n\n" +
-                "Kemungkinan koneksi internet tidak tersedia.\n\n" +
                 "Apakah kamu ingin mengunduh CSV sebagai alternatif? " +
                 "File CSV tetap dapat dibuka menggunakan Microsoft Excel."
             );
@@ -406,6 +310,93 @@ Tidak mengekspor:
 
 
     // =====================================================
+    // QUESTION BANK
+    // =====================================================
+
+    async function exportQuestions(questions) {
+        const XLSX = await loadExcelLibrary();
+        const rows = questions.map(question => [
+            String(question.id ?? ""), question.question, question.category, question.difficulty,
+            question.options.A, question.options.B, question.options.C, question.options.D,
+            question.answer, question.active ? "Aktif" : "Nonaktif"
+        ]);
+        const worksheet = XLSX.utils.aoa_to_sheet([QUESTION_COLUMNS, ...rows]);
+        worksheet["!cols"] = [34, 64, 24, 14, 25, 25, 25, 25, 17, 14].map(wch => ({ wch }));
+        worksheet["!autofilter"] = { ref: worksheet["!ref"] };
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, QUESTION_SHEET);
+        XLSX.writeFile(workbook, "bank-soal.xlsx");
+    }
+
+    async function readQuestions(file) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        if (!/\.xlsx$/i.test(file.name) || bytes[0] !== 0x50 || bytes[1] !== 0x4B) {
+            throw new Error("Pilih file Excel berformat .xlsx.");
+        }
+
+        const XLSX = await loadExcelLibrary();
+        let workbook;
+        try {
+            workbook = XLSX.read(bytes, { nodim: true });
+        } catch {
+            throw new Error("File Excel tidak dapat dibaca. Periksa apakah file bisa dibuka di Excel.");
+        }
+
+        const worksheet = workbook.Sheets[QUESTION_SHEET] ?? workbook.Sheets[workbook.SheetNames[0]];
+        if (!worksheet?.["!ref"]) {
+            throw new Error("Lembar bank soal kosong.");
+        }
+
+        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", blankrows: true });
+        const firstRow = XLSX.utils.decode_range(worksheet["!ref"]).s.r + 1;
+        const headers = rows.shift().map(value => String(value).trim().toLowerCase());
+        const columns = QUESTION_COLUMNS.map(name => {
+            const header = name.toLowerCase();
+            const column = headers.indexOf(header);
+            if (column === -1 && name !== "ID") {
+                throw new Error(`Kolom "${name}" tidak ditemukan. Gunakan format dari Ekspor Excel.`);
+            }
+            if (column !== -1 && column !== headers.lastIndexOf(header)) {
+                throw new Error(`Kolom "${name}" muncul lebih dari sekali.`);
+            }
+            return column;
+        });
+
+        const questions = [];
+        rows.forEach((row, index) => {
+            const values = columns.map(column => String(row[column] ?? "").trim());
+            if (values.every(value => value === "")) {
+                return;
+            }
+
+            const rowNumber = firstRow + index + 1;
+            const [id, question, category, difficulty, A, B, C, D, answer, status] = values;
+            const statusValue = status.toLowerCase();
+            if (!["aktif", "nonaktif", "true", "false", "1", "0"].includes(statusValue)) {
+                throw new Error(`Baris ${rowNumber}: Status harus Aktif atau Nonaktif.`);
+            }
+
+            questions.push({
+                rowNumber,
+                id,
+                question,
+                category,
+                difficulty: difficulty.toLowerCase(),
+                options: { A, B, C, D },
+                answer: answer.toUpperCase(),
+                active: ["aktif", "true", "1"].includes(statusValue)
+            });
+        });
+
+        if (questions.length === 0) {
+            throw new Error("Tidak ada soal untuk diimpor.");
+        }
+
+        return questions;
+    }
+
+    // =====================================================
     // PUBLIC API
     // =====================================================
 
@@ -415,7 +406,11 @@ Tidak mengekspor:
 
         exportCSV: exportToCSV,
 
-        formatLeaderboard: formatLeaderboard
+        formatLeaderboard: formatLeaderboard,
+
+        exportQuestions,
+
+        readQuestions
 
     };
 

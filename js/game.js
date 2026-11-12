@@ -31,6 +31,9 @@ Dependencies:
     // =====================================================
 
     const setupSection = document.getElementById("setupSection");
+    const resumeSection = document.getElementById("resumeSection");
+    const resumeGameButton = document.getElementById("resumeGameButton");
+    const newGameButton = document.getElementById("newGameButton");
     const gameSection = document.getElementById("gameSection");
     const resultSection = document.getElementById("resultSection");
 
@@ -61,6 +64,7 @@ Dependencies:
 
     const exportExcelButton = document.getElementById("exportExcelButton");
     const restartGameButton = document.getElementById("restartGameButton");
+    const restartDialog = document.getElementById("restartDialog");
 
 
     // =====================================================
@@ -77,13 +81,11 @@ Dependencies:
 
     let questionIndex = 0;
 
-    let currentQuestion = null;
+    let pendingTurn = null;
 
     let timerInterval = null;
 
-    let questionStartedAt = null;
-
-    let timeRemaining = 0;
+    let quizDeadline = null;
 
     let gameFinished = false;
 
@@ -397,10 +399,7 @@ Dependencies:
     // =====================================================
 
     function shuffleQuestionPool() {
-        const activeQuestions =
-            MBStorage.getActiveQuestions();
-
-        questionPool = shuffleArray(activeQuestions);
+        questionPool = shuffleArray(questionPool);
 
         questionIndex = 0;
     }
@@ -490,11 +489,18 @@ Dependencies:
 
         gameFinished = false;
 
-        currentQuestion = null;
+        pendingTurn = null;
 
+        questionPool = activeQuestions;
         shuffleQuestionPool();
 
+        saveGameSession();
+        showGameBoard();
+    }
+
+    function showGameBoard() {
         hideElement(setupSection);
+        hideElement(resumeSection);
 
         hideElement(resultSection);
 
@@ -505,16 +511,6 @@ Dependencies:
         renderBoxes();
 
         renderLeaderboard();
-
-        saveGameSession();
-
-        console.log(
-            "[Mystery Box] Game dimulai.",
-            {
-                players: players,
-                boxes: boxes.length
-            }
-        );
     }
 
 
@@ -629,7 +625,7 @@ Dependencies:
     // =====================================================
 
     function selectBox(boxId) {
-        if (gameFinished) {
+        if (gameFinished || pendingTurn) {
             return;
         }
 
@@ -657,10 +653,8 @@ Dependencies:
 
         updateGameDisplay();
 
-        saveGameSession();
-
         if (box.type === "quiz") {
-            handleQuizBox(player);
+            handleQuizBox(box, player);
         } else {
             handleSpecialBox(box.type, player);
         }
@@ -692,21 +686,12 @@ Dependencies:
         boxModal.classList.add("hidden");
 
         document.body.style.overflow = "";
-
-        currentQuestion = null;
     }
 
 
     function hideModalCloseButton() {
         if (closeModalButton) {
             closeModalButton.classList.add("hidden");
-        }
-    }
-
-
-    function showModalCloseButton() {
-        if (closeModalButton) {
-            closeModalButton.classList.remove("hidden");
         }
     }
 
@@ -726,31 +711,41 @@ Dependencies:
     // QUIZ BOX
     // =====================================================
 
-    function handleQuizBox(player) {
+    function handleQuizBox(box, player) {
         const question = getNextQuestion();
 
         if (!question) {
+            box.used = false;
             player.turns--;
+            renderBoxes();
+            updateGameDisplay();
 
             alert(
                 "Tidak ada pertanyaan aktif. " +
                 "Permainan tidak dapat dilanjutkan."
             );
 
-            boxGrid.querySelectorAll(
-                ".mystery-box"
-            ).forEach(function (button) {
-                button.disabled = true;
-            });
-
             return;
         }
 
-        currentQuestion = question;
+        const durationMs = Math.max(1, Number(currentSettings.timerDuration) || 20) * 1000;
+        pendingTurn = { type: "quiz", question, durationMs, remainingMs: durationMs };
 
+        saveGameSession();
         showQuizModal(player, question);
+        startQuizTimer();
     }
 
+
+    function getQuizPoints(difficulty) {
+        const difficultyPoints = {
+            easy: currentSettings.easyPoints,
+            medium: currentSettings.mediumPoints,
+            hard: currentSettings.hardPoints
+        };
+
+        return Number(difficultyPoints[difficulty]) || 0;
+    }
 
     function showQuizModal(player, question) {
         clearModal();
@@ -758,15 +753,7 @@ Dependencies:
         hideModalCloseButton();
 
         const difficulty = question.difficulty;
-
-        const difficultyPoints = {
-            easy: currentSettings.easyPoints,
-            medium: currentSettings.mediumPoints,
-            hard: currentSettings.hardPoints
-        };
-
-        const basePoints =
-            Number(difficultyPoints[difficulty]) || 0;
+        const basePoints = getQuizPoints(difficulty);
 
         const options = ["A", "B", "C", "D"];
 
@@ -843,8 +830,6 @@ Dependencies:
 
         openModal();
 
-        initializeQuizTimer(player, question, basePoints);
-
         modalContent.querySelectorAll(
             ".quiz-option"
         ).forEach(
@@ -857,13 +842,7 @@ Dependencies:
                         const selectedAnswer =
                             button.dataset.answer;
 
-                        handleQuizAnswer(
-                            player,
-                            question,
-                            selectedAnswer,
-                            basePoints,
-                            false
-                        );
+                        handleQuizAnswer(selectedAnswer);
 
                     }
                 );
@@ -877,48 +856,56 @@ Dependencies:
     // QUIZ TIMER
     // =====================================================
 
-    function initializeQuizTimer(
-        player,
-        question,
-        basePoints
-    ) {
-        stopTimer();
-
-        timeRemaining = Math.max(
-            1,
-            Number(currentSettings.timerDuration) || 20
-        );
-
-        questionStartedAt = Date.now();
-
-        updateTimerDisplay();
-
-        timerInterval = setInterval(
-            function () {
-
-                timeRemaining--;
-
-                updateTimerDisplay();
-
-                if (timeRemaining <= 0) {
-
-                    handleQuizAnswer(
-                        player,
-                        question,
-                        null,
-                        basePoints,
-                        true
-                    );
-
-                }
-
-            },
-            1000
-        );
+    function getQuizTimeRemaining() {
+        return quizDeadline === null
+            ? pendingTurn.remainingMs
+            : Math.min(pendingTurn.durationMs, Math.max(0, quizDeadline - Date.now()));
     }
 
+    function startQuizTimer() {
+        if (pendingTurn?.type !== "quiz" || pendingTurn.result || quizDeadline !== null) {
+            return;
+        }
 
-    function updateTimerDisplay() {
+        let seconds = Math.ceil(pendingTurn.remainingMs / 1000);
+        updateTimerDisplay(seconds);
+
+        if (document.hidden) {
+            return;
+        }
+
+        quizDeadline = Date.now() + pendingTurn.remainingMs;
+        if (seconds === 0) {
+            handleQuizAnswer(null);
+            return;
+        }
+
+        timerInterval = setInterval(function () {
+            const remainingMs = getQuizTimeRemaining();
+            const nextSeconds = Math.ceil(remainingMs / 1000);
+
+            if (nextSeconds === 0) {
+                handleQuizAnswer(null);
+            } else if (nextSeconds !== seconds) {
+                seconds = nextSeconds;
+                pendingTurn.remainingMs = remainingMs;
+                updateTimerDisplay(seconds);
+                saveGameSession();
+            }
+        }, 200);
+    }
+
+    function pauseQuizTimer() {
+        if (quizDeadline === null) {
+            return;
+        }
+
+        pendingTurn.remainingMs = getQuizTimeRemaining();
+        stopTimer();
+        saveGameSession();
+    }
+
+    function updateTimerDisplay(timeRemaining) {
         const timerValue = document.getElementById(
             "timerValue"
         );
@@ -933,17 +920,15 @@ Dependencies:
 
         if (timerElement) {
 
-            if (timeRemaining <= 5) {
-                timerElement.classList.add("danger");
-            } else {
-                timerElement.classList.remove("danger");
-            }
+            timerElement.classList.toggle("warning", timeRemaining <= 5);
 
         }
     }
 
 
     function stopTimer() {
+        quizDeadline = null;
+
         if (timerInterval !== null) {
             clearInterval(timerInterval);
 
@@ -956,31 +941,22 @@ Dependencies:
     // QUIZ ANSWER
     // =====================================================
 
-    function handleQuizAnswer(
-        player,
-        question,
-        selectedAnswer,
-        basePoints,
-        isTimeout
-    ) {
-        // Mencegah jawaban diproses dua kali.
-        if (
-            !currentQuestion ||
-            currentQuestion.id !== question.id
-        ) {
+    function handleQuizAnswer(selectedAnswer) {
+        if (pendingTurn?.type !== "quiz" || pendingTurn.result || quizDeadline === null) {
             return;
         }
 
+        const remainingMs = getQuizTimeRemaining();
         stopTimer();
 
-        const elapsedSeconds = Math.max(
-            0,
-            Math.ceil(
-                (Date.now() - questionStartedAt) / 1000
-            )
-        );
+        const { question, durationMs } = pendingTurn;
+        const player = getCurrentPlayer();
+        const isTimeout = remainingMs === 0;
+        if (isTimeout) {
+            selectedAnswer = null;
+        }
 
-        player.timeSpent += elapsedSeconds;
+        player.timeSpent += Math.ceil((durationMs - remainingMs) / 1000);
 
         const isCorrect =
             !isTimeout &&
@@ -990,7 +966,7 @@ Dependencies:
 
         if (isCorrect) {
 
-            earnedPoints = basePoints;
+            earnedPoints = getQuizPoints(question.difficulty);
 
             player.correctAnswers++;
 
@@ -1007,6 +983,17 @@ Dependencies:
             player.score += earnedPoints;
         }
 
+        pendingTurn.result = { selectedAnswer, isTimeout, earnedPoints };
+        saveGameSession();
+        renderQuizResult(question, pendingTurn.result);
+        renderLeaderboard();
+    }
+
+    function renderQuizResult(question, { selectedAnswer, isTimeout, earnedPoints }) {
+        modalContent.querySelector(".quiz-timer").classList.add("hidden");
+        modalContent.querySelector(".quiz-points-label").classList.add("hidden");
+
+        const isCorrect = selectedAnswer === question.answer;
 
         // Disable all answer options.
         const optionButtons = modalContent.querySelectorAll(
@@ -1026,7 +1013,7 @@ Dependencies:
                     answer === selectedAnswer &&
                     !isCorrect
                 ) {
-                    button.classList.add("incorrect");
+                    button.classList.add("wrong");
                 }
 
             }
@@ -1040,11 +1027,11 @@ Dependencies:
 
         if (isTimeout) {
 
-            resultTitle = "Time's Up! ⏰";
+            resultTitle = "Waktu habis";
 
             resultDescription =
-                `Waktu habis. Jawaban yang benar adalah ` +
-                `${question.answer}. Tidak ada poin yang diperoleh.`;
+                `Jawaban yang benar adalah ${question.answer}. ` +
+                `Kamu mendapat 0 poin.`;
 
         } else if (isCorrect) {
 
@@ -1055,10 +1042,11 @@ Dependencies:
 
         } else {
 
-            resultTitle = "Wrong Answer! 😵";
+            resultTitle = "Jawaban salah";
 
             resultDescription =
-                `Jawaban yang benar adalah ${question.answer}.`;
+                `Pilihanmu ${selectedAnswer}. Jawaban yang benar adalah ` +
+                `${question.answer}. Kamu mendapat 0 poin.`;
 
         }
 
@@ -1075,7 +1063,10 @@ Dependencies:
         modalContent.appendChild(resultElement);
 
 
-        // Next turn button.
+        showContinueButton();
+    }
+
+    function showContinueButton() {
         modalActions.innerHTML = `
             <button
                 type="button"
@@ -1092,16 +1083,8 @@ Dependencies:
 
         continueButton.addEventListener(
             "click",
-            function () {
-                finishCurrentTurn();
-            }
+            finishCurrentTurn
         );
-
-        currentQuestion = null;
-
-        renderLeaderboard();
-
-        saveGameSession();
     }
 
 
@@ -1110,10 +1093,6 @@ Dependencies:
     // =====================================================
 
     function handleSpecialBox(type, player) {
-        clearModal();
-
-        hideModalCloseButton();
-
         let title = "";
 
         let icon = "";
@@ -1204,6 +1183,16 @@ Dependencies:
         }
 
 
+        pendingTurn = { type, result: { title, icon, points, description } };
+        saveGameSession();
+        renderSpecialResult(player, pendingTurn.result);
+        renderLeaderboard();
+    }
+
+    function renderSpecialResult(player, { title, icon, points, description }) {
+        clearModal();
+        hideModalCloseButton();
+
         const pointsText = points > 0
             ? `+${points}`
             : String(points);
@@ -1212,15 +1201,15 @@ Dependencies:
         modalContent.innerHTML = `
 
             <div class="special-result-icon">
-                ${icon}
+                ${escapeHTML(icon)}
             </div>
 
             <h2>
-                ${title}
+                ${escapeHTML(title)}
             </h2>
 
             <div class="special-result-points">
-                ${pointsText}
+                ${escapeHTML(pointsText)}
             </div>
 
             <p class="special-result-description">
@@ -1234,29 +1223,7 @@ Dependencies:
         `;
 
 
-        modalActions.innerHTML = `
-            <button
-                type="button"
-                class="btn btn-primary"
-                id="continueGameButton"
-            >
-                Lanjutkan →
-            </button>
-        `;
-
-        const continueButton = document.getElementById(
-            "continueGameButton"
-        );
-
-        continueButton.addEventListener(
-            "click",
-            finishCurrentTurn
-        );
-
-        renderLeaderboard();
-
-        saveGameSession();
-
+        showContinueButton();
         openModal();
     }
 
@@ -1266,14 +1233,12 @@ Dependencies:
     // =====================================================
 
     function finishCurrentTurn() {
-        stopTimer();
-
-        closeModal();
-
-        if (gameFinished) {
+        if (gameFinished || !pendingTurn?.result) {
             return;
         }
 
+        closeModal();
+        pendingTurn = null;
         turnIndex++;
 
         const remaining = boxes.filter(
@@ -1390,12 +1355,76 @@ Dependencies:
 
             questionIndex: questionIndex,
 
+            questionPool: questionPool,
+
+            settings: currentSettings,
+
+            pendingTurn: pendingTurn,
+
             gameFinished: gameFinished,
 
             savedAt: new Date().toISOString()
         };
 
         MBStorage.saveSession(session);
+    }
+
+    function showSessionChoice() {
+        const session = MBStorage.getUnfinishedSession();
+
+        if (session) {
+            gameStatus.textContent = "Sesi tersimpan";
+            hideElement(setupSection);
+            showElement(resumeSection);
+        } else {
+            gameStatus.textContent = "Menunggu permainan";
+            hideElement(resumeSection);
+            showElement(setupSection);
+        }
+    }
+
+    function resumeGame() {
+        const session = MBStorage.getUnfinishedSession();
+        if (!session) {
+            showSessionChoice();
+            return;
+        }
+
+        players = session.players;
+        boxes = session.boxes;
+        turnIndex = session.turnIndex;
+        currentSettings = session.settings ?? MBStorage.getSettings();
+        pendingTurn = session.pendingTurn ?? null;
+
+        if (Array.isArray(session.questionPool)) {
+            questionPool = session.questionPool;
+            questionIndex = session.questionIndex ?? 0;
+        } else {
+            // Sesi lama hanya menyimpan kotak yang sudah dibuka dan skor pemain.
+            questionPool = MBStorage.getActiveQuestions();
+            shuffleQuestionPool();
+            turnIndex = Math.max(turnIndex, boxes.filter(box => box.used).length);
+        }
+
+        showGameBoard();
+
+        if (!pendingTurn && boxes.every(box => box.used)) {
+            finishGame();
+            return;
+        }
+
+        saveGameSession();
+
+        if (pendingTurn?.type === "quiz") {
+            showQuizModal(getCurrentPlayer(), pendingTurn.question);
+            if (pendingTurn.result) {
+                renderQuizResult(pendingTurn.question, pendingTurn.result);
+            } else {
+                startQuizTimer();
+            }
+        } else if (pendingTurn) {
+            renderSpecialResult(getCurrentPlayer(), pendingTurn.result);
+        }
     }
 
 
@@ -1508,13 +1537,7 @@ Dependencies:
 
         renderFinalLeaderboard();
 
-        MBStorage.saveSession({
-            players: players,
-            boxes: boxes,
-            turnIndex: turnIndex,
-            gameFinished: true,
-            savedAt: new Date().toISOString()
-        });
+        saveGameSession();
 
         console.log(
             "[Mystery Box] Permainan selesai.",
@@ -1556,16 +1579,12 @@ Dependencies:
     // RESTART GAME
     // =====================================================
 
+    function showRestartDialog() {
+        restartDialog.returnValue = "";
+        restartDialog.showModal();
+    }
+
     function restartGame() {
-        const confirmed = confirm(
-            "Mulai permainan baru?\n\n" +
-            "Hasil permainan sebelumnya akan dihapus."
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
         stopTimer();
 
         closeModal();
@@ -1582,7 +1601,7 @@ Dependencies:
 
         questionIndex = 0;
 
-        currentQuestion = null;
+        pendingTurn = null;
 
         gameFinished = false;
 
@@ -1592,9 +1611,13 @@ Dependencies:
 
         hideElement(resultSection);
 
+        hideElement(resumeSection);
         showElement(setupSection);
 
+        gameStatus.textContent = "Menunggu permainan";
+
         renderPlayerInputs();
+        playerCountInput.focus();
 
         console.log(
             "[Mystery Box] Siap untuk permainan baru."
@@ -1607,6 +1630,36 @@ Dependencies:
     // =====================================================
 
     function initializeEventListeners() {
+        resumeGameButton.addEventListener("click", resumeGame);
+        newGameButton.addEventListener("click", showRestartDialog);
+        restartDialog.addEventListener("close", function () {
+            if (restartDialog.returnValue === "restart") {
+                restartGame();
+            }
+        });
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.hidden) {
+                pauseQuizTimer();
+            } else {
+                startQuizTimer();
+            }
+        });
+        window.addEventListener("pagehide", pauseQuizTimer);
+        window.addEventListener("pageshow", startQuizTimer);
+
+        window.addEventListener("storage", function (event) {
+            if (event.key !== MBStorage.STORAGE_KEYS.SESSION && event.key !== null) {
+                return;
+            }
+
+            if (players.length > 0 && !gameFinished) {
+                stopTimer();
+                window.location.reload();
+            } else if (!gameFinished) {
+                showSessionChoice();
+            }
+        });
 
         if (playerCountInput) {
 
@@ -1632,18 +1685,7 @@ Dependencies:
 
             closeModalButton.addEventListener(
                 "click",
-                function () {
-
-                    // Modal quiz tidak boleh ditutup
-                    // sebelum jawaban atau timer selesai.
-
-                    if (currentQuestion) {
-                        return;
-                    }
-
-                    finishCurrentTurn();
-
-                }
+                finishCurrentTurn
             );
 
         }
@@ -1663,7 +1705,7 @@ Dependencies:
 
             restartGameButton.addEventListener(
                 "click",
-                restartGame
+                showRestartDialog
             );
 
         }
@@ -1698,6 +1740,7 @@ Dependencies:
 
         renderPlayerInputs();
 
+        showSessionChoice();
         initializeEventListeners();
 
         console.log(

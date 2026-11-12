@@ -620,6 +620,22 @@ Tidak membutuhkan database atau backend.
         );
     }
 
+    function getUnfinishedSession() {
+        const session = getSession();
+
+        if (
+            session?.gameFinished === false &&
+            Array.isArray(session.players) && session.players.length > 0 &&
+            Array.isArray(session.boxes) && session.boxes.length > 0 &&
+            Number.isInteger(session.turnIndex) &&
+            session.turnIndex >= 0 && session.turnIndex <= session.boxes.length
+        ) {
+            return session;
+        }
+
+        return null;
+    }
+
 
     function saveSession(sessionData) {
         if (
@@ -719,6 +735,7 @@ Tidak membutuhkan database atau backend.
 
         // Session
         getSession,
+        getUnfinishedSession,
         saveSession,
         clearSession,
 

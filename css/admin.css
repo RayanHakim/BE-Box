@@ -216,6 +216,42 @@
     font-size: 0.85rem;
 }
 
+.question-excel {
+    margin-bottom: 20px;
+    color: var(--text-main);
+    font-size: 0.85rem;
+}
+
+.question-excel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.question-excel-actions .btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
+}
+
+.question-excel-status:not(:empty) {
+    margin-top: 6px;
+    font-weight: 700;
+}
+
+.question-excel-status.error {
+    color: #A52228;
+}
+
+@media (max-width: 480px) {
+    .question-excel-actions .btn {
+        flex: 1 1 auto;
+        width: auto;
+        padding-inline: 12px;
+    }
+}
+
 
 /* =========================================================
    6. QUESTION FILTER

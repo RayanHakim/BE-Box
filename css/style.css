@@ -503,10 +503,13 @@ input[type="number"] {
 
     padding: 20px;
 
+    animation: fadeIn 0.25s ease;
+}
+
+.modal-overlay,
+.restart-dialog::backdrop {
     background: rgba(12, 29, 24, 0.72);
     backdrop-filter: blur(8px);
-
-    animation: fadeIn 0.25s ease;
 }
 
 .modal-card {
